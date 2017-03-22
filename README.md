@@ -23,12 +23,12 @@
 
 ### 3. 体积小：
 
-数据库文件ip2region.db只有1.5M（1.2版本前是3.5M）
+数据库文件ip2region.db只有3.5M
 
 ### Composer 安装
 
 ```
-composer require zoujingli/Ip2Region
+composer require zoujingli/ip2region
 ```
 
 ### ip2region 使用
