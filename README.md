@@ -40,6 +40,11 @@ $ip = '101.105.35.57';
 
 $info = $ip2region->btreeSearch($ip);
 
-echo $info; // 2163|中国|华南|广东省|深圳市|鹏博士
+var_export($info, true);
+
+// array (
+//     'city_id' => 2163,
+//     'region' => '中国|华南|广东省|深圳市|鹏博士',
+// )
 
 ```
