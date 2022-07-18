@@ -8,18 +8,19 @@
     {
       "name": "Anyon",
       "email": "zoujingli@qq.com",
-      "homepage": "http://ctolog.com"
+      "homepage": "https://thinkadmin.top"
     }
   ],
+  "require": {
+    "php": ">=5.4"
+  },
   "keywords": [
     "Ip2Region"
   ],
-  "require": {
-    "php": ">=5.3"
-  },
   "autoload": {
     "classmap": [
-      "Ip2Region.php"
+      "Ip2Region.php",
+      "XdbSearcher.php"
     ]
   }
 }
