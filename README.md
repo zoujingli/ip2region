@@ -81,4 +81,4 @@ ip2region 微信交流群，请先加微信：lionsoul2014 (请备注 ip2region)
 ### 4、数据结构
 
 1. v1.0数据库文件的结构和原理 blog：[“ip2region 数据库文件的结构和原理”](https://github.com/dongyado/dongyado.github.io/blob/master/_posts/2016-08-18-structure-of-ip2region-database-file.md)
-2. v1.0素据库文件的结构和原理 视频：[ip2region 数据结构设计和实现视频分享](https://www.bilibili.com/video/BV1wv4y1N7SD)
+2. v1.0数据库文件的结构和原理 视频：[ip2region 数据结构设计和实现视频分享](https://www.bilibili.com/video/BV1wv4y1N7SD)
