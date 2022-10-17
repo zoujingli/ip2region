@@ -61,8 +61,6 @@ API 介绍，使用文档和测试程序请参考对应 `maker` 生成程序下�
 | :white_check_mark: | 已完成  | [python](https://github.com/lionsoul2014/ip2region/blob/master/maker/python)                                                       | python xdb 生成程序实现 | [leolin49](https://github.com/leolin49) |
 | :white_check_mark: | 已完成  | [csharp](https://github.com/lionsoul2014/ip2region/blob/master/maker/csharp)                                                       | csharp xdb 生成程序实现 | [Alan Lee](https://github.com/malus2077) |
 
-
-
 # 并发查询必读
 
 全部查询客户端的 search 接口都 <b>不是</b> 并发安全的实现，不同进程/线程/协程需要通过创建不同的查询对象来安全使用，并发量很大的情况下，基于文件查询的方式可能会导致打开文件数过多的错误，请修改内核的最大允许打开文件数(fs.file-max=一个更高的值)，或者将整个xdb加载到内存进行安全并发使用。
@@ -87,7 +85,7 @@ ip2region 微信交流群，请先加微信：lionsoul2014 (请备注 ip2region)
 2. xdb 查询过程分析：[“ip2region xdb 数据结构和查询过程详解”](https://mp.weixin.qq.com/s?__biz=MzU4MDc2MzQ5OA==&mid=2247483696&idx=1&sn=6e9e138e86cf18245656c54ff4be3129&chksm=fd50ab35ca2722239ae7c0bb08efa44f499110c810227cbad3a16f36ebc1c2afc58eb464a57c#rd)
 3. xdb 生成过程分析：[“ip2region xdb 二进制数据生成过程详解”](https://mp.weixin.qq.com/s?__biz=MzU4MDc2MzQ5OA==&mid=2247483718&idx=1&sn=92e552f3bba44a97ca661da244f35574&chksm=fd50ab43ca2722559733ed4e1082f239f381aaa881f9dbeb479174936145522696d9d200531e#rd)
 
-# 关于PHP用法
+# 关于 ip2region v2.0 的 PHP 用法
 
 ### 完全基于文件的查询
 
