@@ -61,7 +61,7 @@ class XdbSearcher
      * initialize the xdb searcher
      * @throws Exception
      */
-    function __construct($dbFile, $vectorIndex = null, $cBuff = null)
+    function __construct($dbFile = null, $vectorIndex = null, $cBuff = null)
     {
         // check the content buffer first
         if ($cBuff != null) {
@@ -69,6 +69,9 @@ class XdbSearcher
             $this->contentBuff = $cBuff;
         } else {
             // open the xdb binary file
+            if (is_null($dbFile)) {
+                $dbFile = __DIR__ . '/ip2region.xdb';
+            }
             $this->handle = fopen($dbFile, "r");
             if ($this->handle === false) {
                 throw new Exception("failed to open xdb file '%s'", $dbFile);
