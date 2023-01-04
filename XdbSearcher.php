@@ -68,10 +68,11 @@ class XdbSearcher
             $this->vectorIndex = null;
             $this->contentBuff = $cBuff;
         } else {
-            // open the xdb binary file
+            // 加载默认数据文件 by Anyon
             if (is_null($dbFile)) {
-                $dbFile = __DIR__ . '/ip2region.xdb';
+                $dbFile = __DIR__ . DIRECTORY_SEPARATOR . 'ip2region.xdb';
             }
+            // open the xdb binary file
             $this->handle = fopen($dbFile, "r");
             if ($this->handle === false) {
                 throw new Exception("failed to open xdb file '%s'", $dbFile);
@@ -268,7 +269,7 @@ class XdbSearcher
             'indexPolicy'   => self::getShort($buff, 2),
             'createdAt'     => self::getLong($buff, 4),
             'startIndexPtr' => self::getLong($buff, 8),
-            'endIndexPtr'   => self::getLong($buff, 12),
+            'endIndexPtr'   => self::getLong($buff, 12)
         ];
     }
 
@@ -280,7 +281,9 @@ class XdbSearcher
             return null;
         }
 
-        return self::loadHeader($handle);
+        $header = self::loadHeader($handle);
+        fclose($handle);
+        return $header;
     }
 
     // load vector index from a file handle
@@ -311,7 +314,9 @@ class XdbSearcher
             return null;
         }
 
-        return self::loadVectorIndex($handle);
+        $vIndex = self::loadVectorIndex($handle);
+        fclose($handle);
+        return $vIndex;
     }
 
     // load the xdb content from a file handle
