@@ -5,7 +5,7 @@
 [![PHP Version Require](http://poser.pugx.org/zoujingli/ip2region/require/php)](https://packagist.org/packages/ip2region)
 [![License](https://poser.pugx.org/zoujingli/ip2region/license)](https://packagist.org/packages/zoujingli/ip2region)
 
-本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) ，简单整合方便使用`Composer`来管理。
+本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) 简单整合，方便使用 `Composer` 管理。
 
 # Ip2region 是什么
 
