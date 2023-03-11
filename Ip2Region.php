@@ -67,7 +67,6 @@ class Ip2Region
     {
         $geo = $this->memorySearch($ip);
         $arr = explode('|', str_replace(['0|'], '|', isset($geo['region']) ? $geo['region'] : ''));
-        if (count($arr) > 2 && $arr[0] === '中国') unset($arr[0]);
         return join('', array_splice($arr, 0, -1)) . '【' . (array_pop($arr)) . '】';
     }
 
