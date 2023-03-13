@@ -39,8 +39,7 @@ class Ip2Region
 
     /**
      * construct method
-     *
-     * @param string ip2regionFile
+     * @param string $ip2regionFile
      */
     public function __construct($ip2regionFile = null)
     {
@@ -349,5 +348,19 @@ class Ip2Region
             'city_id' => self::getLong($data, 0),
             'region'  => substr($data, 4),
         );
+    }
+
+    /**
+     * 直接查询并返回名称
+     * @param string $ip
+     * @return string
+     * @throws \Exception
+     */
+    public function simple($ip)
+    {
+        $geo = $this->memorySearch($ip);
+        $arr = explode('|', str_replace('0|', '|', isset($geo['region']) ? $geo['region'] : ''));
+        if (($last = array_pop($arr)) === '内网IP') $last = '';
+        return join('', $arr) . (empty($last) ? '' : "【{$last}】");
     }
 }
