@@ -19,6 +19,8 @@ composer require zoujingli/ip2region
 $ip2region = new \Ip2Region();
 $result = $ip2region->simple('8.8.8.8');
 var_dump($result);
+
+// 高级用户可以直接调用 XdbSearcher 类。
 ```
 
 # Ip2region 是什么
