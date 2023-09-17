@@ -5,7 +5,7 @@
 [![PHP Version Require](http://poser.pugx.org/zoujingli/ip2region/require/php)](https://packagist.org/packages/ip2region)
 [![License](https://poser.pugx.org/zoujingli/ip2region/license)](https://packagist.org/packages/zoujingli/ip2region)
 
-本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) 简单整合，方便 `PHP` 项目使用 `Composer` 来管理。
+本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) 简单整合，方便 `PHP` 项目使用 `Composer` 来安装。
 
 # 通过 Composer 安装
 
@@ -20,7 +20,7 @@ $ip2region = new \Ip2Region();
 $result = $ip2region->simple('8.8.8.8');
 var_dump($result);
 
-// 高级用户可以直接调用 XdbSearcher 类。
+// 高级用法可以直接调用 XdbSearcher 类。
 ```
 
 # Ip2region 是什么
