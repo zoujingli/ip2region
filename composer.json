@@ -1,8 +1,9 @@
 {
   "type": "library",
   "name": "zoujingli/ip2region",
+  "version": "3.0.0",
   "homepage": "https://github.com/zoujingli/Ip2Region",
-  "description": "Ip2Region for PHP",
+  "description": "Ip2Region v3.0 for PHP - 企业级 IP 地理位置查询库，支持 IPv4/IPv6，分片文件管理，智能缓存，零依赖",
   "license": "Apache-2.0",
   "authors": [
     {
@@ -14,13 +15,57 @@
   "require": {
     "php": ">=5.4"
   },
+  "suggest": {
+    "ext-opcache": "启用 OPcache 以获得更好的性能"
+  },
   "keywords": [
-    "Ip2Region"
+    "Ip2Region",
+    "IP",
+    "地理位置",
+    "IPv4",
+    "IPv6",
+    "地理位置查询",
+    "IP定位",
+    "geoip",
+    "location",
+    "geolocation",
+    "分片数据库",
+    "压缩",
+    "高性能",
+    "缓存",
+    "企业级"
   ],
   "autoload": {
     "classmap": [
-      "Ip2Region.php",
-      "XdbSearcher.php"
+      "src/"
+    ],
+    "files": [
+      "ip2region.php"
     ]
+  },
+  "scripts": {
+    "demo": "php tests/demo.php",
+    "test:ipv4": "php -r \"require 'ip2region.php'; echo ip2region('8.8.8.8') . PHP_EOL;\"",
+    "test:ipv6": "php -r \"require 'ip2region.php'; echo ip2region('2001:4860:4860::8888') . PHP_EOL;\"",
+    "query": "php -r \"require 'ip2region.php'; echo ip2region(\\$argv[1]) . PHP_EOL;\"",
+    "split:v4": "php tools/split_db.php v4 100 gzip",
+    "split:v6": "php tools/split_db.php v6 100 gzip",
+    "split:v4:fast": "php tools/split_db.php v4 100 gzip fast",
+    "split:v6:fast": "php tools/split_db.php v6 100 gzip fast",
+    "split:v4:zip": "php tools/split_db.php v4 100 zip",
+    "split:v6:zip": "php tools/split_db.php v6 100 zip",
+    "split:v4:none": "php tools/split_db.php v4 100 none",
+    "split:v6:none": "php tools/split_db.php v6 100 none"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "extra": {
+    "branch-alias": {
+      "dev-master": "3.0.x-dev"
+    }
   }
 }
