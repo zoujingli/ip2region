@@ -4,6 +4,60 @@
 
 ip2region 项目支持自定义数据库文件配置，但需要用户自行获取数据库文件。本文档详细说明如何获取和使用自定义数据库文件。
 
+## 自定义数据库文件位置建议
+
+### 路径选择原则
+
+1. **项目目录内**：数据库文件必须放在项目目录内，确保 PHP 有读取权限
+2. **使用绝对路径**：建议使用绝对路径，避免相对路径可能带来的问题
+3. **根据项目需求**：根据你的项目结构和部署环境选择合适的存放位置
+4. **避免系统目录**：不要放在 `vendor/`、`tools/`、`/var/lib/`、`/usr/local/` 等系统目录下
+5. **权限检查**：确保 Web 服务器用户对数据库文件有读取权限
+
+### 推荐的存放位置
+
+#### 1. 项目根目录（简单项目）
+```bash
+/var/www/your-project/
+├── ip2region_v4.xdb        # IPv4 数据库文件
+├── ip2region_v6.xdb        # IPv6 数据库文件
+├── vendor/                 # Composer 依赖
+└── your-app.php
+```
+
+#### 2. 专用数据目录（推荐）
+```bash
+/var/www/your-project/
+├── data/                   # 数据目录
+│   ├── ip2region_v4.xdb   # IPv4 数据库文件
+│   └── ip2region_v6.xdb   # IPv6 数据库文件
+├── vendor/                 # Composer 依赖
+└── your-app.php
+```
+
+### 路径示例
+
+```php
+// 示例1：项目根目录
+$ip2region = new Ip2Region('file', '/var/www/your-project/ip2region_v4.xdb', '/var/www/your-project/ip2region_v6.xdb');
+
+// 示例2：专用数据目录（推荐）
+$ip2region = new Ip2Region('file', '/var/www/your-project/data/ip2region_v4.xdb', '/var/www/your-project/data/ip2region_v6.xdb');
+
+// 示例3：子目录存放
+$ip2region = new Ip2Region('file', '/var/www/your-project/storage/ip2region_v4.xdb', '/var/www/your-project/storage/ip2region_v6.xdb');
+
+// 示例4：Windows 环境
+$ip2region = new Ip2Region('file', 'C:\\www\\your-project\\data\\ip2region_v4.xdb', 'C:\\www\\your-project\\data\\ip2region_v6.xdb');
+```
+
+### 重要提醒
+
+- **项目目录内**：数据库文件必须放在项目目录内，确保 PHP 有读取权限
+- **避免系统目录**：不要放在 `/var/lib/`、`/usr/local/` 等系统目录下
+- **权限检查**：确保 Web 服务器用户对数据库文件有读取权限
+- **相对路径**：也可以使用相对路径，但建议使用绝对路径更安全
+
 ## 数据源选择
 
 ### 1. 免费版本（推荐用于学习和个人项目）
@@ -85,33 +139,36 @@ curl -L -o ip2region_v6.xdb https://raw.githubusercontent.com/lionsoul2014/ip2re
 # 创建目录
 mkdir -p tools/
 
+# 创建自定义数据库目录（推荐）
+mkdir -p data/
+
 # 下载 IPv4 数据库（免费版本）
 # 使用 wget：
-wget -O tools/ip2region_v4.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
+wget -O data/ip2region_v4.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
 
 # 或使用 curl：
-curl -L -o tools/ip2region_v4.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
+curl -L -o data/ip2region_v4.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
 
 # 下载 IPv6 数据库（如果可用）
 # 使用 wget：
-wget -O tools/ip2region_v6.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
+wget -O data/ip2region_v6.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
 
 # 或使用 curl：
-curl -L -o tools/ip2region_v6.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
+curl -L -o data/ip2region_v6.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
 ```
 
 ### 2. 验证文件
 
 ```bash
 # 检查文件是否存在
-ls -la tools/ip2region_v*.xdb
+ls -la data/ip2region_v*.xdb
 
 # 检查文件大小
-du -h tools/ip2region_v*.xdb
+du -h data/ip2region_v*.xdb
 
 # 应该看到类似输出：
-# -rw-r--r-- 1 user staff 11042429 Dec 19 10:00 tools/ip2region_v4.xdb
-# -rw-r--r-- 1 user staff 617000000 Dec 19 10:00 tools/ip2region_v6.xdb
+# -rw-r--r-- 1 user staff 11042429 Dec 19 10:00 data/ip2region_v4.xdb
+# -rw-r--r-- 1 user staff 617000000 Dec 19 10:00 data/ip2region_v6.xdb
 ```
 
 ### 3. 生成分片文件（可选）
@@ -149,15 +206,20 @@ echo $result; // 输出：美国【Level3】
 
 echo "开始下载 ip2region 数据库文件..."
 
-# 创建目录
-mkdir -p tools/
+# 设置下载目录（请根据你的项目需求修改）
+DOWNLOAD_DIR="${1:-data}"
+
+# 创建自定义数据库目录
+mkdir -p "$DOWNLOAD_DIR"
+
+echo "下载目录: $DOWNLOAD_DIR"
 
 # 下载 IPv4 数据库
 echo "下载 IPv4 数据库..."
 if command -v wget &> /dev/null; then
-    wget -O tools/ip2region_v4.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
+    wget -O "$DOWNLOAD_DIR/ip2region_v4.xdb" https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
 elif command -v curl &> /dev/null; then
-    curl -L -o tools/ip2region_v4.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
+    curl -L -o "$DOWNLOAD_DIR/ip2region_v4.xdb" https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb
 else
     echo "错误：未找到 wget 或 curl 命令"
     exit 1
@@ -165,10 +227,11 @@ fi
 
 # 下载 IPv6 数据库
 echo "下载 IPv6 数据库..."
+echo "注意：IPv6 数据库文件较大（约 617MB），请耐心等待..."
 if command -v wget &> /dev/null; then
-    wget -O tools/ip2region_v6.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
+    wget -O "$DOWNLOAD_DIR/ip2region_v6.xdb" https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
 elif command -v curl &> /dev/null; then
-    curl -L -o tools/ip2region_v6.xdb https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
+    curl -L -o "$DOWNLOAD_DIR/ip2region_v6.xdb" https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb
 else
     echo "错误：未找到 wget 或 curl 命令"
     exit 1
@@ -176,15 +239,31 @@ fi
 
 # 验证文件
 echo "验证下载的文件..."
-ls -la tools/ip2region_v*.xdb
+ls -la "$DOWNLOAD_DIR"/ip2region_v*.xdb
+
+# 显示使用示例
+echo ""
+echo "使用示例："
+echo "// 使用绝对路径"
+echo "\$ip2region = new Ip2Region('file', '$(pwd)/$DOWNLOAD_DIR/ip2region_v4.xdb', '$(pwd)/$DOWNLOAD_DIR/ip2region_v6.xdb');"
 
 echo "下载完成！"
 ```
 
 使用方法：
 ```bash
+# 下载到默认目录（data/）
 chmod +x download_db.sh
 ./download_db.sh
+
+# 下载到项目子目录
+./download_db.sh storage
+
+# 下载到项目根目录
+./download_db.sh .
+
+# 下载到指定项目目录（绝对路径）
+./download_db.sh /var/www/your-project/data
 ```
 
 ## 注意事项
@@ -199,6 +278,8 @@ chmod +x download_db.sh
 - **格式验证**：确保文件是有效的 xdb 格式
 - **权限设置**：确保文件具有适当的读取权限
 - **路径配置**：使用绝对路径以避免路径解析问题
+- **项目目录内**：数据库文件必须放在项目目录内，确保 PHP 有读取权限
+- **避免系统目录**：不要放在 `/var/lib/`、`/usr/local/` 等系统目录下
 
 ### 性能优化
 - **SSD 存储**：将数据库文件放在 SSD 上以获得更好的性能

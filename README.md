@@ -71,7 +71,7 @@ ip2region/
 > **💡 重要提示**：
 >
 > -   `db/` 目录中的分片文件是通过 `tools/split_db.php` 工具从 `tools/` 目录的完整数据库文件生成的
-> -   `tools/` 目录中的 `ip2region_v4.xdb` 和 `ip2region_v6.xdb` 是原始数据库文件，需要手动下载
+> -   `tools/` 目录中的 `ip2region_v4.xdb` 和 `ip2region_v6.xdb` 是原始数据库文件，仅用于分片工具
 > -   文件名必须严格按照 `ip2region_v4.xdb` 和 `ip2region_v6.xdb` 命名，不能有任何变化
 > -   项目已包含分片文件，可直接使用，无需手动生成
 
@@ -203,7 +203,7 @@ try {
     $ip2region = new \Ip2Region();
     
     // 如需使用自定义数据库，请参考下面的"自定义数据库配置"部分
-    // $ip2region = new \Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+    // $ip2region = new \Ip2Region('file', '/path/to/your/ip2region_v4.xdb', '/path/to/your/ip2region_v6.xdb');
 
     // 基础查询
     echo $ip2region->simple('61.142.118.231') . "\n";
@@ -245,8 +245,8 @@ try {
 require 'vendor/autoload.php';
 
 try {
-    // 使用自定义数据库路径
-    $ip2region = new \Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+    // 使用自定义数据库路径（建议使用绝对路径）
+    $ip2region = new \Ip2Region('file', '/path/to/your/ip2region_v4.xdb', '/path/to/your/ip2region_v6.xdb');
 
     // 查询IP
     echo $ip2region->simple('8.8.8.8') . "\n";
@@ -498,11 +498,11 @@ new Ip2Region($cachePolicy = 'file', $dbPathV4 = null, $dbPathV6 = null)
     // 默认模式（使用分片数据库）
     $ip2region = new Ip2Region();
     
-    // 使用自定义数据库
-    $ip2region = new Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+    // 使用自定义数据库（建议使用绝对路径）
+    $ip2region = new Ip2Region('file', '/path/to/your/ip2region_v4.xdb', '/path/to/your/ip2region_v6.xdb');
     
     // 只使用自定义 IPv4 数据库，IPv6 使用默认分片
-    $ip2region = new Ip2Region('file', '/path/to/ip2region_v4.xdb', null);
+    $ip2region = new Ip2Region('file', '/path/to/your/ip2region_v4.xdb', null);
     ```
 
 #### 核心查询方法
@@ -652,8 +652,8 @@ try {
     // 默认模式（使用分片数据库）
     $ip2region = new \Ip2Region();
     
-    // 或者使用自定义数据库
-    // $ip2region = new \Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+    // 或者使用自定义数据库（建议使用绝对路径）
+    // $ip2region = new \Ip2Region('file', '/path/to/your/ip2region_v4.xdb', '/path/to/your/ip2region_v6.xdb');
 
     // 查询前状态
     $statsBefore = $ip2region->getStats();
@@ -982,8 +982,11 @@ composer require zoujingli/ip2region:^3.0
 
 -   [V2.0 版本文档](https://github.com/zoujingli/ip2region/tree/v2.0) - 轻量级版本，仅支持 IPv4
 -   [V3.0 版本文档](https://github.com/zoujingli/ip2region/tree/master) - 完整版本，支持 IPv4 + IPv6
--   [自定义数据库配置说明](CUSTOM_DB_USAGE.md) - 自定义数据库路径配置详细说明
--   [数据库文件下载说明](DATABASE_DOWNLOAD.md) - 如何获取和配置自定义数据库文件
+-   [文档中心](doc/) - 完整的文档索引和导航
+-   [API 文档](doc/API.md) - 完整的 API 参考文档
+-   [自定义数据库配置说明](doc/CUSTOM_DB_USAGE.md) - 自定义数据库路径配置详细说明
+-   [数据库文件下载说明](doc/DATABASE_DOWNLOAD.md) - 如何获取和配置自定义数据库文件
+-   [贡献指南](doc/CONTRIBUTING.md) - 如何参与项目贡献
 -   [官方 ip2region 项目](https://github.com/lionsoul2014/ip2region) - 原始项目
 
 ## 贡献
@@ -994,6 +997,6 @@ composer require zoujingli/ip2region:^3.0
 
 如有问题或建议，请通过以下方式联系：
 
--   提交 Issue
--   发送邮件
--   其他联系方式
+-   **GitHub Issues**：[提交问题或建议](https://github.com/zoujingli/ip2region/issues)
+-   **邮箱**：zoujingli@qq.com
+-   **作者主页**：[https://thinkadmin.top](https://thinkadmin.top)

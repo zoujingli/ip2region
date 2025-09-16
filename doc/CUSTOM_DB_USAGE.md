@@ -4,6 +4,23 @@
 
 ip2region 现在支持自定义数据库路径配置，允许用户指定自己的 IPv4 和 IPv6 数据库文件路径。当配置了自定义路径时，系统会优先使用自定义的 xdb 文件，否则回退到默认的压缩包分片模式。
 
+## 自定义数据库文件位置建议
+
+> 📖 **详细说明**：关于数据库文件位置选择、下载和配置的完整说明，请参考 [数据库文件下载说明](DATABASE_DOWNLOAD.md)。
+
+### 快速参考
+
+**推荐存放位置**：
+- 项目根目录：`/var/www/your-project/ip2region_v4.xdb`
+- 专用数据目录：`/var/www/your-project/data/ip2region_v4.xdb`
+- 子目录存放：`/var/www/your-project/storage/ip2region_v4.xdb`
+
+**重要原则**：
+- ✅ 数据库文件必须放在项目目录内
+- ✅ 建议使用绝对路径
+- ❌ 不要放在 `vendor/`、`tools/`、`/var/lib/` 等系统目录下
+- ✅ 确保 PHP 有读取权限
+
 ## 兼容性说明
 
 - **PHP 版本要求**：完全兼容 PHP 5.4+ 版本
@@ -98,8 +115,8 @@ echo $result['region']; // 输出：美国|0|0|Level3
 <?php
 require_once 'src/Ip2Region.php';
 
-// 指定自定义数据库路径
-$searcher = new Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+// 指定自定义数据库路径（建议使用绝对路径）
+$searcher = new Ip2Region('file', '/path/to/your/ip2region_v4.xdb', '/path/to/your/ip2region_v6.xdb');
 
 // 查询IP
 $result = $searcher->memorySearch('8.8.8.8');
@@ -114,10 +131,10 @@ echo $result['region'];
 require_once 'src/Ip2Region.php';
 
 // 只指定 IPv4 自定义路径，IPv6 使用默认分片
-$searcher = new Ip2Region('file', '/path/to/ip2region_v4.xdb', null);
+$searcher = new Ip2Region('file', '/path/to/your/ip2region_v4.xdb', null);
 
 // 或者只指定 IPv6 自定义路径，IPv4 使用默认分片
-$searcher = new Ip2Region('file', null, '/path/to/ip2region_v6.xdb');
+$searcher = new Ip2Region('file', null, '/path/to/your/ip2region_v6.xdb');
 ?>
 ```
 
@@ -129,8 +146,8 @@ require_once 'src/Ip2Region.php';
 
 $searcher = new Ip2Region();
 
-// 动态设置自定义路径
-$searcher->setCustomDbPaths('/path/to/v4.xdb', '/path/to/v6.xdb');
+// 动态设置自定义路径（建议使用绝对路径）
+$searcher->setCustomDbPaths('/path/to/your/ip2region_v4.xdb', '/path/to/your/ip2region_v6.xdb');
 
 // 清除自定义路径，回退到默认模式
 $searcher->setCustomDbPaths(null, null);
