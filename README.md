@@ -7,63 +7,40 @@
 
 # ip2region v3.0
 
-> 🚀 **v3.0 全新升级**：基于官方 ip2region 深度优化，提供分片文件管理、智能压缩、IPv4/IPv6 双支持的高性能 IP 查询解决方案
+> 🚀 **企业级 IP 地理位置查询库**：基于官方 ip2region 深度优化，支持 IPv4/IPv6，分片文件管理，智能压缩，零依赖
 
 本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) 深度整合优化，专为 `PHP` 项目量身定制，提供企业级 IP 地理位置查询服务。
 
 > ⚠️ **重要提示**：由于 V3.0 版本新增了 IPv6 数据库支持，尽管已进行智能压缩优化，但整体体积仍超过 100MB。如果您仅需 IPv4 查询功能，建议使用 V2 版本以获得更小的体积和更快的加载速度。
 
-## 📦 版本选择建议
+## 📦 版本选择
 
-### V3.0 版本（当前版本）
+| 特性          | V2.0（轻量级）                    | V3.0（完整版）                        |
+|-------------|------------------------------|----------------------------------|
+| IPv4 支持     | ✅                           | ✅                               |
+| IPv6 支持     | ❌                           | ✅                               |
+| 体积大小      | 10MB+                       | 100MB+                           |
+| 性能          | 极快                         | 极快                             |
+| 适用场景      | 仅需 IPv4                    | 需要 IPv6 或企业级功能                |
+| Composer 安装 | `composer require zoujingli/ip2region:^2.0` | `composer require zoujingli/ip2region:^3.0` |
 
-- ✅ **双协议支持**：完整支持 IPv4 + IPv6 地址查询
-- ✅ **智能分片**：大文件自动分片管理，支持多种压缩格式
-- ✅ **企业级功能**：性能监控、批量查询、智能缓存
-- ✅ **零配置**：开箱即用，自动检测和优化
-- ⚠️ **体积较大**：包含 IPv6 数据库，整体体积 100MB+
-
-### V2.0 版本（轻量级）
-
-- ✅ **IPv4 专用**：仅支持 IPv4 地址查询
-- ✅ **体积小巧**：无 IPv6 数据库，体积 10MB+
-- ✅ **加载快速**：启动速度快，内存占用少
-- ✅ **稳定可靠**：经过长期验证的稳定版本
-- ❌ **功能有限**：不支持 IPv6 和部分高级功能
-
-### 选择建议
-
-| 使用场景       | 推荐版本 | 理由                   |
-|------------|------|----------------------|
-| 仅需 IPv4 查询 | V2.0 | 体积适中（10MB+），加载快，功能足够 |
-| 需要 IPv6 支持 | V3.0 | 功能完整，支持双协议           |
-| 企业级应用      | V3.0 | 功能丰富，性能监控完善          |
-| 资源受限环境     | V2.0 | 体积适中（10MB+），内存占用少    |
-| 新项目开发      | V3.0 | 功能完整，面向未来            |
-
-```bash
-# 安装 V2.0 版本（轻量级，仅 IPv4）
-composer require zoujingli/ip2region:^2.0
-
-# 安装 V3.0 版本（完整版，IPv4 + IPv6）
-composer require zoujingli/ip2region:^3.0
-```
-
-> 📖 **V2.0 版本文档**：如果您选择使用 V2.0 版本，请查看 [V2.0 版本文档](https://github.com/zoujingli/ip2region/tree/v2.0) 获取详细的使用说明和 API 参考。
+> ⚠️ **重要提示**：默认的 `composer require zoujingli/ip2region` 命令会安装 V3.0 版本。如需 V2.0 版本，请使用 `composer require zoujingli/ip2region:^2.0`。
 
 ## 🎯 项目简介
 
 ip2region 是一个高性能的IP地址定位库，支持IPv4和IPv6地址查询。通过智能分片和压缩技术，实现了大数据库文件的高效管理，为企业和开发者提供准确、快速的IP地理位置查询服务。
 
+> 📖 **V2.0 版本文档**：如果您仅需 IPv4 查询功能，建议使用 [V2.0 版本](https://github.com/zoujingli/ip2region/tree/v2.0)，体积更小（10MB+），加载更快。
+
 ## ✨ 核心特性
 
 - **🌍 双协议支持**：完整支持 IPv4 和 IPv6 地址查询，自动识别 IP 版本
-- **⚡ 高性能**：基于官方 xdb 格式，查询速度极快，支持多种缓存策略
+- **⚡ 高性能**：基于官方 xdb 格式，查询速度极快，微秒级响应
 - **📦 零依赖**：纯 PHP 实现，兼容 PHP 5.4+，无需额外扩展
 - **🔧 易集成**：支持 Composer 安装，提供函数式和面向对象两种 API
 - **💾 智能缓存**：支持文件缓存、VectorIndex 缓存、完整数据缓存
 - **📊 分片管理**：大文件自动分片（<100MB），支持按需加载和合并
-- **🗜️ 智能压缩**：支持gzip、zip、zstd多种压缩格式，压缩率高达81%
+- **🗜️ 智能压缩**：支持 gzip、zip、zstd 多种压缩格式，压缩率高达 81%
 - **🛡️ 企业级**：完善的错误处理、异常管理和性能监控
 - **🔄 懒加载**：IPv4/IPv6 查询器按需创建，优化内存使用
 - **💡 零配置**：开箱即用，自动检测数据库版本和格式
@@ -85,7 +62,7 @@ ip2region/
 │   └── ip2region_v6.xdb   # IPv6 完整数据库（需要下载）
 ├── tests/                 # 测试文件
 │   └── demo.php           # 演示程序
-├── ip2region.php          # 全局函数入口
+├── function.php           # 全局函数入口
 ├── composer.json          # Composer 配置
 └── README.md              # 项目文档
 ```
@@ -121,46 +98,28 @@ ip2region/
 - **缓存策略**：支持文件、VectorIndex、完整数据三种缓存方式
 - **PHP 5.4+ 兼容**：完全兼容 PHP 5.4 及以上版本
 
-## 快速开始
+## 🚀 快速开始
 
 ### 1. 通过 Composer 安装
 
-#### 安装 V3.0 版本（推荐，功能完整）
-
 ```bash
-# 安装最新 V3.0 版本（支持 IPv4 + IPv6）
+# 安装 V3.0 版本（推荐，功能完整）
 composer require zoujingli/ip2region:^3.0
-```
 
-#### 安装 V2.0 版本（轻量级，仅 IPv4）
-
-```bash
-# 安装 V2.0 版本（仅支持 IPv4，体积 10MB+）
+# 或安装 V2.0 版本（轻量级，仅 IPv4）
 composer require zoujingli/ip2region:^2.0
 ```
 
-> 📖 **V2.0 使用指南**：V2.0 版本的使用方法与 V3.0 基本相同，但仅支持 IPv4 查询。详细说明请参考 [V2.0 版本文档](https://github.com/zoujingli/ip2region/tree/v2.0)。
-
 ### 2. 数据库文件准备
 
-**重要**：项目已包含分片数据库文件，可直接使用。如需使用自定义数据库，请按以下步骤：
+项目已包含分片数据库文件，可直接使用。如需使用自定义数据库：
 
-1. **下载完整数据库文件**到 `tools/` 目录：
-
-    ```bash
-    # 确保文件存在且命名正确
-    ls -la tools/ip2region_v*.xdb
-    ```
-
-2. **生成分片文件**（可选，项目已包含）：
-
-    ```bash
-    # 生成 IPv4 分片
-    php tools/split_db.php v4
-
-    # 生成 IPv6 分片
-    php tools/split_db.php v6
-    ```
+```bash
+# 下载完整数据库文件到 tools/ 目录
+# 然后生成分片文件
+php tools/split_db.php v4    # IPv4 分片
+php tools/split_db.php v6    # IPv6 分片
+```
 
 ### 3. 一行代码开始使用
 
@@ -168,28 +127,13 @@ composer require zoujingli/ip2region:^2.0
 <?php
 require 'vendor/autoload.php';
 
-// 最简单的使用方式 - IPv4 测试
-echo ip2region('61.142.118.231') . "\n"; // 输出: 中国广东省中山市【电信】
-echo ip2region('114.114.114.114') . "\n"; // 输出: 中国江苏省南京市
-echo ip2region('180.76.76.76') . "\n"; // 输出: 中国北京北京市【百度】
+// 最简单的使用方式
+echo ip2region('61.142.118.231') . "\n"; // 中国广东省中山市【电信】
+echo ip2region('2001:4860:4860::8888') . "\n"; // 美国加利福尼亚州圣克拉拉【专线用户】
 
-// IPv6 测试
-echo ip2region('2001:4860:4860::8888') . "\n"; // 输出: 美国加利福尼亚州圣克拉拉【专线用户】
-echo ip2region('2400:3200::1') . "\n"; // 输出: 中国浙江省杭州市【专线用户】
-
-// 多种查询方法
-echo ip2region('61.142.118.231', 'search') . "\n"; // 输出: 中国|广东省|中山市|电信
-echo ip2region('61.142.118.231', 'binary') . "\n"; // 输出: 二进制数据
-echo ip2region('61.142.118.231', 'btree') . "\n"; // 输出: B树查询结果
-
-// 或者使用类方式（带错误处理）
-try {
-    $ip2region = new \Ip2Region();
-    echo $ip2region->simple('61.142.118.231') . "\n"; // 输出: 中国广东省中山市【电信】
-    echo $ip2region->simple('2001:4860:4860::8888') . "\n"; // 输出: 美国加利福尼亚州圣克拉拉【专线用户】
-} catch (Exception $e) {
-    echo "错误: " . $e->getMessage() . "\n";
-}
+// 或者使用类方式
+$ip2region = new \Ip2Region();
+echo $ip2region->simple('61.142.118.231') . "\n"; // 中国广东省中山市【电信】
 ?>
 ```
 
@@ -197,18 +141,13 @@ try {
 
 ```bash
 # 测试 IPv4 查询
-php -r "require 'vendor/autoload.php'; echo ip2region('61.142.118.231') . PHP_EOL;"
-# 输出: 中国广东省中山市【电信】
+composer test:ipv4
 
 # 测试 IPv6 查询
-php -r "require 'vendor/autoload.php'; echo ip2region('2001:4860:4860::8888') . PHP_EOL;"
-# 输出: 美国加利福尼亚州圣克拉拉【专线用户】
+composer test:ipv6
 
-# 测试类方式（带错误处理）
-php -r "require 'vendor/autoload.php'; try { echo (new \Ip2Region())->simple('61.142.118.231') . PHP_EOL; } catch (Exception \$e) { echo 'Error: ' . \$e->getMessage() . PHP_EOL; }"
-
-# 运行演示程序（包含完整的 IPv4 和 IPv6 测试）
-php vendor/zoujingli/ip2region/tests/demo.php
+# 运行演示程序
+composer demo
 ```
 
 ## 在项目中快速调用
