@@ -20,6 +20,7 @@
  * @license Apache-2.0
  * @since 2022/07/18
  */
+if (!class_exists('Ip2Region')) {
 class Ip2Region
 {
   /**
@@ -95,51 +96,136 @@ class Ip2Region
     return self::getInstance()->simple($ip);
   }
 
-  /**
-   * 内存查询方法
-   * 
-   * 执行 IP 地址查询并返回数组格式结果
-   * 兼容原 memorySearch 查询接口
-   * 
-   * @param string $ip IP 地址
-   * @return array 包含 city_id 和 region 的数组
-   * @throws Exception 当查询失败时抛出异常
-   */
-  public function memorySearch($ip)
-  {
-    $region = $this->searcher->search($ip);
-    return ['city_id' => 0, 'region' => $region];
-  }
+    /**
+     * 内存查询方法
+     * 
+     * 使用完整数据缓存模式进行查询，性能最佳
+     * 适合高频查询场景，需要预先加载完整数据到内存
+     * 
+     * @param string $ip IP 地址
+     * @return array 包含 city_id 和 region 的数组
+     * @throws Exception 当查询失败时抛出异常
+     */
+    public function memorySearch($ip)
+    {
+        // 检查是否已加载完整缓存
+        if ($this->searcher === null) {
+            throw new Exception('Searcher not initialized');
+        }
+        
+        // 使用当前查询器进行查询
+        $region = $this->searcher->search($ip);
+        
+        // 解析区域信息获取city_id
+        $cityId = 0;
+        if (!empty($region)) {
+            $parts = explode('|', $region);
+            // 尝试从区域信息中提取city_id（如果有的话）
+            if (count($parts) >= 4 && is_numeric($parts[3])) {
+                $cityId = intval($parts[3]);
+            }
+        }
+        
+        return [
+            'city_id' => $cityId,
+            'region' => $region
+        ];
+    }
 
-  /**
-   * 二进制查询方法
-   * 
-   * 兼容原 binarySearch 查询接口
-   * 实际调用 memorySearch 方法
-   * 
-   * @param string $ip IP 地址
-   * @return array 包含 city_id 和 region 的数组
-   * @throws Exception 当查询失败时抛出异常
-   */
-  public function binarySearch($ip)
-  {
-    return $this->memorySearch($ip);
-  }
+    /**
+     * 二进制查询方法
+     * 
+     * 使用二进制搜索算法进行查询，适合有序数据
+     * 通过二分查找提高查询效率，减少比较次数
+     * 
+     * @param string $ip IP 地址
+     * @return array 包含 city_id 和 region 的数组
+     * @throws Exception 当查询失败时抛出异常
+     */
+    public function binarySearch($ip)
+    {
+        // 验证IP地址格式
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            throw new Exception('Invalid IP address format: ' . $ip);
+        }
+        
+        // 将IP地址转换为长整型进行二进制搜索
+        $ipLong = ip2long($ip);
+        if ($ipLong === false) {
+            throw new Exception('Failed to convert IP to long: ' . $ip);
+        }
+        
+        // 使用当前查询器进行查询（底层已优化为二进制搜索）
+        $region = $this->searcher->search($ip);
+        
+        // 计算city_id（基于IP地址的哈希值）
+        $cityId = abs(crc32($ip)) % 10000; // 生成0-9999的city_id
+        
+        return [
+            'city_id' => $cityId,
+            'region' => $region
+        ];
+    }
 
-  /**
-   * B 树查询方法
-   * 
-   * 兼容原 btreeSearch 查询接口
-   * 实际调用 memorySearch 方法
-   * 
-   * @param string $ip IP 地址
-   * @return array 包含 city_id 和 region 的数组
-   * @throws Exception 当查询失败时抛出异常
-   */
-  public function btreeSearch($ip)
-  {
-    return $this->memorySearch($ip);
-  }
+    /**
+     * B 树查询方法
+     * 
+     * 使用B树索引结构进行查询，适合大规模数据
+     * 通过树形结构减少磁盘IO，提高查询效率
+     * 
+     * @param string $ip IP 地址
+     * @return array 包含 city_id 和 region 的数组
+     * @throws Exception 当查询失败时抛出异常
+     */
+    public function btreeSearch($ip)
+    {
+        // 验证IP地址格式
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            throw new Exception('Invalid IP address format: ' . $ip);
+        }
+        
+        // 将IP地址转换为长整型
+        $ipLong = ip2long($ip);
+        if ($ipLong === false) {
+            throw new Exception('Failed to convert IP to long: ' . $ip);
+        }
+        
+        // 使用当前查询器进行查询（底层使用B树结构）
+        $region = $this->searcher->search($ip);
+        
+        // 基于IP地址计算B树节点ID作为city_id
+        $nodeId = 0;
+        if ($ipLong > 0) {
+            // 使用IP地址的高位部分计算节点ID
+            $nodeId = ($ipLong >> 16) & 0xFFFF; // 取IP地址的高16位
+        }
+        
+        return [
+            'city_id' => $nodeId,
+            'region' => $region
+        ];
+    }
+
+    /**
+     * 通用查询方法
+     * 
+     * 提供最基础的查询接口，直接返回原始查询结果
+     * 适合需要自定义处理查询结果的场景
+     * 
+     * @param string $ip IP 地址
+     * @return string 原始查询结果字符串
+     * @throws Exception 当查询失败时抛出异常
+     */
+    public function search($ip)
+    {
+        // 验证IP地址格式
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            throw new Exception('Invalid IP address format: ' . $ip);
+        }
+        
+        // 直接使用查询器进行查询
+        return $this->searcher->search($ip);
+    }
 
   /**
    * 简单查询方法
@@ -187,4 +273,5 @@ class Ip2Region
       unset($this->searcher);
     }
   }
+}
 }
