@@ -1,26 +1,75 @@
+####### 可解析的提交前缀 ########
+#  ci: 持续集成
+#  fix: 修改
+#  feat: 新增
+#  refactor: 重构
+#  docs: 文档
+#  style: 样式
+#  chore: 其他
+#  build: 构建
+#  pref: 优化
+#  test: 测试
+###############################
+
 on:
   push:
-    # Sequence of patterns matched against refs/tags
     tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'v*' # 仅匹配 v* 版本标签，如 v1.0、v20.15.10
 
-name: Release
+name: Create Release
 permissions: write-all
 
-jobs: 
+jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install -g gen-git-log
+
+      - name: Find Last Tag
+        id: last_tag
+        run: |
+          # 获取所有标签，按版本号降序排序
+          all_tags=$(git tag --list --sort=-version:refname)
+
+          # 获取最新的标签
+          LATEST_TAG=$(echo "$all_tags" | head -n 1)
+          
+          # 获取倒数第二个标签（如果有）
+          SECOND_LATEST_TAG=$(echo "$all_tags" | sed -n '2p')
+
+          # 如果没有任何标签，默认 v1.0.0
+          LATEST_TAG=${LATEST_TAG:-v1.0.0}
+          SECOND_LATEST_TAG=${SECOND_LATEST_TAG:-v1.0.0}
+
+          # 设置环境变量
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+          echo "SECOND_LATEST_TAG=$SECOND_LATEST_TAG" >> $GITHUB_ENV
+
+      - name: Generate Release Notes
+        run: |
+          rm -rf log
+          mkdir -p log
+          git-log -m tag -f -S $SECOND_LATEST_TAG -v ${LATEST_TAG#v}
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ env.LATEST_TAG }}
+          release_name: Release ${{ env.LATEST_TAG }}
+          body_path: log/${{ env.LATEST_TAG }}.md
           draft: false
           prerelease: false
