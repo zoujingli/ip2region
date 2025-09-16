@@ -37,6 +37,7 @@ ip2region 是一个高性能的 IP 地址定位库，支持 IPv4 和 IPv6 地址
 -   **🌍 双协议支持**：完整支持 IPv4 和 IPv6 地址查询，自动识别 IP 版本
 -   **⚡ 高性能**：基于官方 xdb 格式，查询速度极快，微秒级响应
 -   **📦 零依赖**：纯 PHP 实现，兼容 PHP 5.4+，无需额外扩展
+-   **🔧 自定义数据库**：支持自定义 IPv4/IPv6 数据库路径配置
 -   **🔧 易集成**：支持 Composer 安装，提供函数式和面向对象两种 API
 -   **💾 智能缓存**：支持文件缓存、VectorIndex 缓存、完整数据缓存
 -   **📊 分片管理**：大文件自动分片（<100MB），支持按需加载和合并
@@ -138,6 +139,10 @@ echo ip2region('61.142.118.231', 'memory') . "\n"; // 返回数组格式
 // 或者使用类方式
 $ip2region = new \Ip2Region();
 echo $ip2region->simple('61.142.118.231') . "\n"; // 中国广东省中山市【电信】
+
+// 使用自定义数据库（可选）
+$ip2region = new \Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+echo $ip2region->simple('8.8.8.8') . "\n"; // 美国【Level3】
 ?>
 ```
 
@@ -194,7 +199,11 @@ foreach ($ips as $ip) {
 require 'vendor/autoload.php';
 
 try {
-$ip2region = new \Ip2Region();
+    // 默认模式（使用分片数据库）
+    $ip2region = new \Ip2Region();
+    
+    // 如需使用自定义数据库，请参考下面的"自定义数据库配置"部分
+    // $ip2region = new \Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
 
     // 基础查询
     echo $ip2region->simple('61.142.118.231') . "\n";
@@ -229,6 +238,38 @@ $ip2region = new \Ip2Region();
 ?>
 ```
 
+### 自定义数据库配置
+
+```php
+<?php
+require 'vendor/autoload.php';
+
+try {
+    // 使用自定义数据库路径
+    $ip2region = new \Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+
+    // 查询IP
+    echo $ip2region->simple('8.8.8.8') . "\n";
+
+    // 检查是否使用自定义数据库
+    $customStatus = $ip2region->isUsingCustomDb();
+    echo "IPv4 使用自定义数据库: " . ($customStatus['v4'] ? '是' : '否') . "\n";
+    echo "IPv6 使用自定义数据库: " . ($customStatus['v6'] ? '是' : '否') . "\n";
+
+    // 动态设置数据库路径
+    $ip2region->setCustomDbPaths('/path/to/v4.xdb', '/path/to/v6.xdb');
+
+    // 获取数据库配置信息
+    $dbInfo = $ip2region->getDatabaseInfo();
+    echo "IPv4 路径: " . ($dbInfo['custom_v4_path'] ?: '默认分片') . "\n";
+    echo "IPv6 路径: " . ($dbInfo['custom_v6_path'] ?: '默认分片') . "\n";
+
+} catch (Exception $e) {
+    echo "错误: " . $e->getMessage() . "\n";
+}
+?>
+```
+
 ## 数据库文件准备
 
 ### 使用预置数据库
@@ -242,7 +283,7 @@ $ip2region = new \Ip2Region();
 
 如果需要使用自定义的数据库文件，请按以下步骤操作：
 
-#### 1. 下载完整数据库文件
+#### 1. 获取完整数据库文件
 
 **重要**：必须将完整的 `.xdb` 文件放置到 `tools/` 目录，文件名必须完全匹配：
 
@@ -261,8 +302,13 @@ tools/
 
 **获取数据库文件**：
 
--   从 [ip2region 官方仓库](https://github.com/lionsoul2014/ip2region) 下载
--   确保下载的是 `.xdb` 格式，不是 `.txt` 或其他格式
+-   **免费版本**：从 [ip2region 官方仓库](https://github.com/lionsoul2014/ip2region) 下载
+-   IPv4 数据库：[ip2region_v4.xdb](https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb) (10.5MB)
+-   IPv6 数据库：[ip2region_v6.xdb](https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb) (617MB)
+-   **商业版本**：从 [ip2region 官网](https://www.ip2region.net/) 购买或下载
+-   **格式要求**：确保下载的是 `.xdb` 格式，不是 `.txt` 或其他格式
+-   **版本选择**：建议使用最新版本以获得最准确的地理位置数据
+-   **重要提醒**：自定义数据库文件需要从官网下载或购买，确保使用正版数据源
 
 #### 2. 生成分片文件
 
@@ -439,10 +485,25 @@ composer split:v6:none
 #### 构造函数
 
 ```php
-new Ip2Region($cachePolicy = 'file')
+new Ip2Region($cachePolicy = 'file', $dbPathV4 = null, $dbPathV6 = null)
 ```
 
--   **参数**：`$cachePolicy` (string) - 缓存策略：'file', 'vectorIndex', 'content'
+-   **参数**：
+    -   `$cachePolicy` (string) - 缓存策略：'file', 'vectorIndex', 'content'
+    -   `$dbPathV4` (string|null) - IPv4 数据库文件路径，null 表示使用默认分片
+    -   `$dbPathV6` (string|null) - IPv6 数据库文件路径，null 表示使用默认分片
+
+-   **示例**：
+    ```php
+    // 默认模式（使用分片数据库）
+    $ip2region = new Ip2Region();
+    
+    // 使用自定义数据库
+    $ip2region = new Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
+    
+    // 只使用自定义 IPv4 数据库，IPv6 使用默认分片
+    $ip2region = new Ip2Region('file', '/path/to/ip2region_v4.xdb', null);
+    ```
 
 #### 核心查询方法
 
@@ -540,7 +601,27 @@ new Ip2Region($cachePolicy = 'file')
 ##### `getDatabaseInfo()`
 
 -   **功能**：获取数据库信息
--   **返回**：`array` - 包含加载状态、缓存策略、版本信息等
+-   **返回**：`array` - 包含加载状态、缓存策略、版本信息、自定义路径等
+
+##### `setCustomDbPaths($v4Path, $v6Path)`
+
+-   **功能**：动态设置自定义数据库路径
+-   **参数**：
+    -   `$v4Path` (string|null) - IPv4 数据库文件路径
+    -   `$v6Path` (string|null) - IPv6 数据库文件路径
+-   **示例**：`$ip2region->setCustomDbPaths('/path/to/v4.xdb', '/path/to/v6.xdb');`
+
+##### `isUsingCustomDb()`
+
+-   **功能**：检查是否使用自定义数据库
+-   **返回**：`array` - 包含 IPv4 和 IPv6 的使用状态
+-   **示例**：`$status = $ip2region->isUsingCustomDb();`
+
+##### `getCustomDbInfo()`
+
+-   **功能**：获取自定义数据库文件信息
+-   **返回**：`array` - 包含自定义数据库文件的大小、修改时间等信息
+-   **示例**：`$info = $ip2region->getCustomDbInfo();`
 
 #### 静态方法
 
@@ -568,7 +649,11 @@ new Ip2Region($cachePolicy = 'file')
 require 'vendor/autoload.php';
 
 try {
+    // 默认模式（使用分片数据库）
     $ip2region = new \Ip2Region();
+    
+    // 或者使用自定义数据库
+    // $ip2region = new \Ip2Region('file', '/path/to/ip2region_v4.xdb', '/path/to/ip2region_v6.xdb');
 
     // 查询前状态
     $statsBefore = $ip2region->getStats();
@@ -633,6 +718,11 @@ echo "已清理所有缓存\n";
 -   **检查文件名**：必须严格按照 `ip2region_v4.xdb` 和 `ip2region_v6.xdb` 命名
 -   **检查文件权限**：确保文件可读
 -   **下载数据库文件**：从官方仓库下载完整的 `.xdb` 文件
+-   **获取数据源**：
+    -   免费版本：从 [ip2region 官方仓库](https://github.com/lionsoul2014/ip2region) 下载
+        -   IPv4：[ip2region_v4.xdb](https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb) (10.5MB)
+        -   IPv6：[ip2region_v6.xdb](https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb) (617MB)
+    -   商业版本：从 [ip2region 官网](https://www.ip2region.net/) 购买或下载
 -   **生成分片文件**：
 
     ```bash
@@ -729,6 +819,37 @@ ls -la tools/ip2region_v*.xdb
     - **分片大小**：建议 50-100MB，平衡压缩效果和处理速度
 
 ## 更新日志
+
+### v3.0.1 (2025-09-16) 🔧
+
+#### 🔧 自定义数据库配置
+
+-   **自定义路径**：支持指定 IPv4 和 IPv6 数据库文件路径
+-   **灵活配置**：可以混合使用自定义数据库和默认分片文件
+-   **智能切换**：优先使用自定义数据库，自动回退到分片文件
+-   **格式支持**：支持标准的 `.xdb` 格式数据库文件
+
+#### 🚀 API 增强
+
+-   **新增方法**：
+    -   `setCustomDbPaths($v4Path, $v6Path)` - 设置自定义数据库路径
+    -   `isUsingCustomDb()` - 检查是否使用自定义数据库
+    -   `getCustomDbInfo()` - 获取自定义数据库信息
+-   **增强方法**：
+    -   `getDatabaseInfo()` - 现在包含自定义数据库信息
+    -   `createSearcher()` - 支持自定义数据库路径参数
+
+#### 🔧 兼容性改进
+
+-   **PHP 5.4+**：完全兼容 PHP 5.4 及以上版本
+-   **语法优化**：替换了 PHP 5.5+ 特有的语法特性
+-   **错误处理**：增强了自定义数据库文件的错误处理机制
+
+#### 📚 文档完善
+
+-   **使用指南**：添加了详细的自定义数据库配置说明
+-   **下载指南**：提供了数据库文件获取的完整指南
+-   **示例代码**：包含了丰富的使用示例和最佳实践
 
 ### v3.0.0 (2025-09-15) 🚀
 
@@ -861,6 +982,8 @@ composer require zoujingli/ip2region:^3.0
 
 -   [V2.0 版本文档](https://github.com/zoujingli/ip2region/tree/v2.0) - 轻量级版本，仅支持 IPv4
 -   [V3.0 版本文档](https://github.com/zoujingli/ip2region/tree/master) - 完整版本，支持 IPv4 + IPv6
+-   [自定义数据库配置说明](CUSTOM_DB_USAGE.md) - 自定义数据库路径配置详细说明
+-   [数据库文件下载说明](DATABASE_DOWNLOAD.md) - 如何获取和配置自定义数据库文件
 -   [官方 ip2region 项目](https://github.com/lionsoul2014/ip2region) - 原始项目
 
 ## 贡献

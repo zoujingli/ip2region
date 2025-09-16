@@ -43,15 +43,19 @@ class ChunkedDbHelper
 	 * 支持多种压缩格式和多个搜索目录
 	 * 
 	 * @param string|null $baseFile 基准文件名，null时搜索所有分片
+	 * @param array $customDirs 自定义搜索目录数组
 	 * @return array 排序后的分片文件路径数组
 	 */
-	public static function findChunks($baseFile)
+	public static function findChunks($baseFile, $customDirs = array())
 	{
 		$files = array();
 
 		if ($baseFile === null || $baseFile === '') {
 			// 直接搜索分片文件，不依赖基准文件
-			$chunkDirs = array(dirname(__DIR__) . '/db', dirname(__DIR__) . '/tools');
+			$chunkDirs = array_merge(
+				array(dirname(__DIR__) . '/db', dirname(__DIR__) . '/tools'),
+				$customDirs
+			);
 			foreach ($chunkDirs as $cdir) {
 				// 搜索所有可能的分片文件（包括压缩文件）
 				$patterns = array(
@@ -60,7 +64,10 @@ class ChunkedDbHelper
 					$cdir . DIRECTORY_SEPARATOR . 'ip2region_v6.xdb.part*.zip'
 				);
 				foreach ($patterns as $pattern) {
-					$found = glob($pattern) ?: array();
+					$found = glob($pattern);
+					if ($found === false) {
+						$found = array();
+					};
 					$files = array_merge($files, $found);
 				}
 			}
@@ -68,7 +75,10 @@ class ChunkedDbHelper
 			$baseDir = dirname($baseFile);
 			$baseName = basename($baseFile);
 			// 仅在 db/ 或与基准文件同级目录查找分片，无子目录
-			$chunkDirs = array($baseDir, dirname(__DIR__) . '/db');
+			$chunkDirs = array_merge(
+				array($baseDir, dirname(__DIR__) . '/db'),
+				$customDirs
+			);
 			foreach ($chunkDirs as $cdir) {
 				// 搜索所有可能的分片文件（包括压缩文件）
 				$patterns = array(
@@ -77,7 +87,10 @@ class ChunkedDbHelper
 					$cdir . DIRECTORY_SEPARATOR . $baseName . '.part*.zip'
 				);
 				foreach ($patterns as $pattern) {
-					$found = glob($pattern) ?: array();
+					$found = glob($pattern);
+					if ($found === false) {
+						$found = array();
+					};
 					$files = array_merge($files, $found);
 				}
 			}
@@ -134,18 +147,25 @@ class ChunkedDbHelper
 					return $data;
 				}
 				return false;
-
+				
 			case 'zst':
 				// Zstd 压缩文件
 				$data = file_get_contents($file);
 				if ($data === false) {
 					return false;
 				}
-				$decompressed = zstd_uncompress($data);
-				if ($decompressed === false) {
+				// 检查是否支持 zstd 扩展
+				if (function_exists('zstd_uncompress')) {
+					$decompressed = call_user_func('zstd_uncompress', $data);
+					if ($decompressed === false) {
+						return false;
+					}
+					return $decompressed;
+				} else {
+					// 如果不支持 zstd，返回 false
+					error_log("Zstd 扩展未安装，无法解压 .zst 文件: {$file}");
 					return false;
 				}
-				return $decompressed;
 
 			default:
 				// 未压缩文件 - 使用流式读取避免内存问题
@@ -264,7 +284,7 @@ class ChunkedDbHelper
 		self::ensureCacheDir();
 		$files = glob(self::$cacheDir . DIRECTORY_SEPARATOR . 'merged_*.xdb');
 		$total = 0;
-		foreach ($files ?: array() as $f) {
+		foreach ($files as $f) {
 			$total += filesize($f);
 		}
 		return array(
@@ -284,7 +304,7 @@ class ChunkedDbHelper
 	{
 		self::ensureCacheDir();
 		$files = glob(self::$cacheDir . DIRECTORY_SEPARATOR . 'merged_*.xdb');
-		foreach ($files ?: array() as $file) {
+		foreach ($files as $file) {
 			@unlink($file);
 		}
 		// 清理内存缓存
@@ -304,10 +324,41 @@ class ChunkedDbHelper
 		$files = glob(self::$cacheDir . DIRECTORY_SEPARATOR . 'merged_*.xdb');
 		$expiredTime = time() - ($days * 24 * 60 * 60);
 
-		foreach ($files ?: array() as $file) {
+		foreach ($files as $file) {
 			if (filemtime($file) < $expiredTime) {
 				@unlink($file);
 			}
 		}
+	}
+
+	/**
+	 * 检查自定义数据库文件是否存在
+	 * 
+	 * @param string $dbPath 数据库文件路径
+	 * @return bool 文件是否存在
+	 */
+	public static function isCustomDbExists($dbPath)
+	{
+		return $dbPath !== null && file_exists($dbPath);
+	}
+
+	/**
+	 * 获取数据库文件信息
+	 * 
+	 * @param string $dbPath 数据库文件路径
+	 * @return array|null 文件信息或null
+	 */
+	public static function getDbFileInfo($dbPath)
+	{
+		if (!self::isCustomDbExists($dbPath)) {
+			return null;
+		}
+
+		return array(
+			'path' => $dbPath,
+			'size' => filesize($dbPath),
+			'mtime' => filemtime($dbPath),
+			'readable' => is_readable($dbPath)
+		);
 	}
 }
