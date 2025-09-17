@@ -11,7 +11,7 @@
 
 本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) 深度整合优化，专为 `PHP` 项目量身定制，提供企业级 IP 地理位置查询服务。
 
-> 📖 **高级用法参考**：如需使用高级调用，可直接使用 XdbSearcher 基础类进行底层操作，详见下方"高级用法"部分
+> 📖 **高级用法参考**：如需使用高级调用，可直接使用 XdbSearcher 基础类进行底层操作，详见下方[高级用法](#高级用法)部分，或参考[官方仓库调用](https://github.com/lionsoul2014/ip2region/tree/master/binding/php)
 
 > ⚠️ **版本说明**：V2.0 版本专注于 IPv4 查询，体积小巧（10MB+），性能优异。如需 IPv6 支持，请使用 [V3.0 版本](https://github.com/zoujingli/ip2region/tree/master)。
 
@@ -529,7 +529,7 @@ try {
 
 -   [V3.0 版本文档](https://github.com/zoujingli/ip2region/tree/master) - 完整版本，支持 IPv4 + IPv6
 -   [官方 ip2region 项目](https://github.com/lionsoul2014/ip2region) - 原始项目
--   [官方 PHP 绑定](https://github.com/lionsoul2014/ip2region/tree/master/binding/php) - 官方原生实现参考
+-   [官方仓库调用](https://github.com/lionsoul2014/ip2region/tree/master/binding/php) - 官方原生实现参考
 -   [数据结构详解](https://mp.weixin.qq.com/s?__biz=MzU4MDc2MzQ5OA==&mid=2247483696&idx=1&sn=6e9e138e86cf18245656c54ff4be3129&chksm=fd50ab35ca2722239ae7c0bb08efa44f499110c810227cbad3a16f36ebc1c2afc58eb464a57c#rd)
 
 ## 贡献
