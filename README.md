@@ -11,7 +11,11 @@
 
 本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) 深度整合优化，专为 `PHP` 项目量身定制，提供企业级 IP 地理位置查询服务。
 
+> 📖 **高级用法参考**：如需使用高级调用，可直接使用 XdbSearcher 基础类进行底层操作，详见下方"高级用法"部分
+
 > ⚠️ **版本说明**：V2.0 版本专注于 IPv4 查询，体积小巧（10MB+），性能优异。如需 IPv6 支持，请使用 [V3.0 版本](https://github.com/zoujingli/ip2region/tree/master)。
+
+> 🔄 **数据格式变动**：新版本数据格式已从 `国家|区域|省份|城市|ISP`（5 字段）变更为 `国家|省份|城市|ISP`（4 字段），去掉了区域字段。请确保您的代码适配新的数据格式。
 
 ## ✨ 核心特性
 
@@ -27,6 +31,8 @@
 ## 🚀 快速开始
 
 > 📦 **版本说明**：本页面介绍的是 V2.0 版本的使用方法。V2.0 专注于 IPv4 查询，体积小巧，性能优异。
+
+> 🔄 **格式变动提醒**：新版本数据格式为 `国家|省份|城市|ISP`（4 字段），旧版本为 `国家|区域|省份|城市|ISP`（5 字段）。请确保代码适配新格式。
 
 ### 1. 通过 Composer 安装
 
@@ -113,7 +119,7 @@ $ip2region = new \Ip2Region();
 
 ##### `btreeSearch($ip)`
 
--   **功能**：B树查询，使用B树索引结构，减少磁盘IO
+-   **功能**：B 树查询，使用 B 树索引结构，减少磁盘 IO
 -   **特点**：适合大规模数据，通过树形结构提高查询效率
 -   **参数**：`$ip` (string) - IP 地址
 -   **返回**：`array` - 包含 city_id 和 region 的数组
@@ -129,8 +135,8 @@ $ip2region = new \Ip2Region();
 
 ##### `ip2region($ip, $method)`
 
--   **功能**：通用IP查询函数，提供最便捷的查询接口
--   **特点**：与V3.0版本保持接口一致，支持多种查询方式
+-   **功能**：通用 IP 查询函数，提供最便捷的查询接口
+-   **特点**：与 V3.0 版本保持接口一致，支持多种查询方式
 -   **参数**：
     -   `$ip` (string) - IP 地址
     -   `$method` (string) - 查询方法，支持：memory, binary, btree, search, simple
@@ -142,17 +148,16 @@ $ip2region = new \Ip2Region();
     $result = ip2region('180.76.76.76', 'binary'); // ['city_id' => 15758, 'region' => '中国|北京|北京市|百度']
     ```
 
-
 #### 查询方法对比
 
-| 方法名 | 算法特点 | 适用场景 | city_id计算 | 性能特点 |
-|--------|----------|----------|-------------|----------|
-| `memorySearch` | 完整数据缓存 | 高频查询，内存充足 | 从区域信息提取 | 最快，内存占用大 |
-| `binarySearch` | 二进制搜索 | 有序数据，快速查找 | CRC32哈希取模 | 快速，内存适中 |
-| `btreeSearch` | B树索引 | 大规模数据，平衡性能 | IP高16位计算 | 平衡，磁盘IO少 |
-| `search` | 基础查询 | 自定义处理结果 | 无 | 最基础，最灵活 |
-| `simple` | 格式化输出 | 用户友好显示 | 无 | 易读，最常用 |
-| `ip2region` | 通用函数 | 便捷查询接口 | 根据方法而定 | 最便捷，与V3.0一致 |
+| 方法名         | 算法特点     | 适用场景             | city_id 计算    | 性能特点             |
+| -------------- | ------------ | -------------------- | --------------- | -------------------- |
+| `memorySearch` | 完整数据缓存 | 高频查询，内存充足   | 从区域信息提取  | 最快，内存占用大     |
+| `binarySearch` | 二进制搜索   | 有序数据，快速查找   | CRC32 哈希取模  | 快速，内存适中       |
+| `btreeSearch`  | B 树索引     | 大规模数据，平衡性能 | IP 高 16 位计算 | 平衡，磁盘 IO 少     |
+| `search`       | 基础查询     | 自定义处理结果       | 无              | 最基础，最灵活       |
+| `simple`       | 格式化输出   | 用户友好显示         | 无              | 易读，最常用         |
+| `ip2region`    | 通用函数     | 便捷查询接口         | 根据方法而定    | 最便捷，与 V3.0 一致 |
 
 ## 🚀 Composer 脚本
 
@@ -209,34 +214,51 @@ ip2region/
 
 ### 模块化设计
 
-- **Ip2Region.php**：核心类文件，包含所有查询方法
-- **function.php**：函数库文件，提供便捷的函数接口
-- **XdbSearcher.php**：底层搜索引擎，处理XDB格式数据
+-   **Ip2Region.php**：核心类文件，包含所有查询方法
+-   **function.php**：函数库文件，提供便捷的函数接口
+-   **XdbSearcher.php**：底层搜索引擎，处理 XDB 格式数据
 
 ### 高级用法
 
-#### 直接使用 XdbSearcher 类
+#### 直接使用 XdbSearcher 基础类
+
+本库提供了 XdbSearcher 基础类，可以直接调用底层的 xdb 查询功能，实现更精细的控制和更高的性能。
+
+**优势**：
+
+-   直接操作 xdb 文件，性能最优
+-   支持多种缓存策略，灵活配置
+-   适合高频查询和性能敏感场景
+-   与官方 ip2region 完全兼容
 
 ```php
 <?php
 require 'vendor/autoload.php';
 
-// 完全基于文件的查询
+// 完全基于文件的查询（内存占用最小）
 $searcher = XdbSearcher::newWithFileOnly(__DIR__ . '/ip2region.xdb');
 $region = $searcher->search('180.76.76.76');
 echo $region; // 中国|北京|北京市|百度
 
-// 缓存 VectorIndex 索引（推荐）
+// 缓存 VectorIndex 索引（推荐，平衡性能和内存）
 $vIndex = XdbSearcher::loadVectorIndexFromFile(__DIR__ . '/ip2region.xdb');
 $searcher = XdbSearcher::newWithVectorIndex(__DIR__ . '/ip2region.xdb', $vIndex);
 $region = $searcher->search('61.142.118.231');
+echo $region; // 中国|广东省|中山市|电信
 
-// 缓存整个 xdb 数据（最高性能）
+// 缓存整个 xdb 数据（最高性能，适合高频查询）
 $cBuff = XdbSearcher::loadContentFromFile(__DIR__ . '/ip2region.xdb');
 $searcher = XdbSearcher::newWithBuffer($cBuff);
 $region = $searcher->search('202.96.134.133');
+echo $region; // 中国|广东省|深圳市|电信
 ?>
 ```
+
+**性能对比**：
+
+-   文件查询：内存占用最小，适合低频查询
+-   VectorIndex 缓存：内存占用适中，性能优异，推荐使用
+-   完整缓存：性能最佳，适合高频查询场景
 
 ## 🎯 性能优化
 
@@ -266,7 +288,7 @@ php search_test.php --db=ip2region.xdb --cache-policy=vectorIndex
 -   **内存**: 32GB DDR4-3200
 -   **存储**: NVMe SSD
 -   **PHP 版本**: PHP 8.1.0
--   **测试数据**: 真实中国IP地址（电信、联通、移动、百度、腾讯等）
+-   **测试数据**: 真实中国 IP 地址（电信、联通、移动、百度、腾讯等）
 
 ### 缓存策略性能对比
 
@@ -338,7 +360,7 @@ Bench finished, {cachePolicy: content, total: 3417955, took: 2.3s, cost: 0.0007 
 -   **查询方式**: VectorIndex 缓存
 -   **处理时间**: 8.5 秒
 -   **平均性能**: 117,000 QPS
--   **测试IP**: 61.142.118.231, 202.96.134.133, 180.76.76.76 等
+-   **测试 IP**: 61.142.118.231, 202.96.134.133, 180.76.76.76 等
 
 #### 场景 2: API 接口实时查询
 
@@ -346,15 +368,15 @@ Bench finished, {cachePolicy: content, total: 3417955, took: 2.3s, cost: 0.0007 
 -   **查询方式**: 完整缓存
 -   **响应时间**: 0.8ms（P99）
 -   **CPU 使用率**: 15%
--   **测试IP**: 中国各省市真实IP地址
+-   **测试 IP**: 中国各省市真实 IP 地址
 
 #### 场景 3: 批量数据处理
 
--   **数据量**: 1000 万条中国IP记录
+-   **数据量**: 1000 万条中国 IP 记录
 -   **查询方式**: VectorIndex 缓存
 -   **处理时间**: 45 秒
 -   **内存峰值**: 3.2MB
--   **测试IP**: 电信、联通、移动、百度、腾讯等运营商IP
+-   **测试 IP**: 电信、联通、移动、百度、腾讯等运营商 IP
 
 ### 性能优化建议
 
@@ -464,7 +486,23 @@ try {
 
 ### 标准格式
 
-每个 IP 数据段的 region 信息格式：`国家|区域|省份|城市|ISP`
+每个 IP 数据段的 region 信息格式：`国家|省份|城市|ISP`
+
+### 格式变动说明
+
+> ⚠️ **重要变更**：数据格式已从旧版本的 5 字段变更为 4 字段
+
+| 版本       | 格式                          | 字段说明               |
+| ---------- | ----------------------------- | ---------------------- |
+| **旧格式** | `国家\|区域\|省份\|城市\|ISP` | 5 个字段，包含区域信息 |
+| **新格式** | `国家\|省份\|城市\|ISP`       | 4 个字段，去掉区域字段 |
+
+**迁移指南**：
+
+-   旧代码中解析 `$fields[1]` 为区域，现在需要调整为省份
+-   旧代码中解析 `$fields[2]` 为省份，现在需要调整为城市
+-   旧代码中解析 `$fields[3]` 为城市，现在需要调整为 ISP
+-   旧代码中解析 `$fields[4]` 为 ISP，现在需要调整为第 4 个字段
 
 ### 数据特点
 
@@ -472,6 +510,7 @@ try {
 -   其他国家数据主要定位到国家级别
 -   数据去重和压缩，数据库大小约 11MB
 -   支持亿级别 IP 数据段
+-   **重要**：数据格式为 4 个字段（国家|省份|城市|ISP），去掉了区域字段
 
 ## 🔄 版本对比
 
@@ -490,6 +529,7 @@ try {
 
 -   [V3.0 版本文档](https://github.com/zoujingli/ip2region/tree/master) - 完整版本，支持 IPv4 + IPv6
 -   [官方 ip2region 项目](https://github.com/lionsoul2014/ip2region) - 原始项目
+-   [官方 PHP 绑定](https://github.com/lionsoul2014/ip2region/tree/master/binding/php) - 官方原生实现参考
 -   [数据结构详解](https://mp.weixin.qq.com/s?__biz=MzU4MDc2MzQ5OA==&mid=2247483696&idx=1&sn=6e9e138e86cf18245656c54ff4be3129&chksm=fd50ab35ca2722239ae7c0bb08efa44f499110c810227cbad3a16f36ebc1c2afc58eb464a57c#rd)
 
 ## 贡献
