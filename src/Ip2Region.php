@@ -141,7 +141,7 @@ class Ip2Region
         }
         
         // 检查缓存文件是否比源分片文件更新
-        $chunks = ChunkedDbHelper::findChunks(dirname(__DIR__) . '/tools/ip2region_' . $version . '.xdb');
+        $chunks = ChunkedDbHelper::findChunks(dirname(__DIR__) . '/db/ip2region_' . $version . '.xdb');
         if (!empty($chunks)) {
             $cacheTime = filemtime($cacheFile);
             $newestChunkTime = 0;
@@ -204,7 +204,7 @@ class Ip2Region
         }
         
         // 需要重新生成
-        $chunks = ChunkedDbHelper::findChunks(dirname(__DIR__) . '/tools/ip2region_' . $version . '.xdb');
+        $chunks = ChunkedDbHelper::findChunks(dirname(__DIR__) . '/db/ip2region_' . $version . '.xdb');
         
         if (!empty($chunks)) {
             // 合并到持久化缓存
