@@ -120,6 +120,62 @@ class Ip2Region
     }
 
     /**
+     * 验证缓存文件是否有效
+     * 
+     * @param string $cacheFile 缓存文件路径
+     * @param string $version 版本 (v4/v6)
+     * @return bool 是否有效
+     */
+    private static function isValidCacheFile($cacheFile, $version)
+    {
+        if (!file_exists($cacheFile)) {
+            return false;
+        }
+        
+        $fileSize = filesize($cacheFile);
+        
+        // 基本大小检查（避免空文件或损坏文件）
+        $minSize = $version === 'v4' ? 10 * 1024 * 1024 : 100 * 1024 * 1024; // 10MB for v4, 100MB for v6
+        if ($fileSize < $minSize) {
+            return false;
+        }
+        
+        // 检查缓存文件是否比源分片文件更新
+        $chunks = ChunkedDbHelper::findChunks(dirname(__DIR__) . '/tools/ip2region_' . $version . '.xdb');
+        if (!empty($chunks)) {
+            $cacheTime = filemtime($cacheFile);
+            $newestChunkTime = 0;
+            
+            foreach ($chunks as $chunk) {
+                if (file_exists($chunk)) {
+                    $chunkTime = filemtime($chunk);
+                    if ($chunkTime > $newestChunkTime) {
+                        $newestChunkTime = $chunkTime;
+                    }
+                }
+            }
+            
+            // 如果缓存文件比最新的分片文件旧，认为无效
+            if ($cacheTime < $newestChunkTime) {
+                return false;
+            }
+        }
+        
+        // 检查文件格式（简单验证）
+        $sample = file_get_contents($cacheFile, false, null, 0, 1024);
+        if ($sample === false) {
+            return false;
+        }
+        
+        // 检查是否包含地理位置相关的字符串
+        $hasGeoData = strpos($sample, '中国') !== false || 
+                      strpos($sample, '美国') !== false || 
+                      strpos($sample, '|') !== false;
+        
+        return $hasGeoData;
+    }
+
+    /**
      * 获取或创建合并的数据库文件
      */
     private function getMergedDbFile($version)
@@ -140,9 +196,8 @@ class Ip2Region
         // 检查持久化缓存
         $cacheFile = self::$cacheDir . '/ip2region_' . $version . '.xdb';
         if (file_exists($cacheFile)) {
-            // 检查缓存文件是否有效（通过文件大小判断）
-            $expectedSize = $version === 'v4' ? 11042429 : 617000000; // 预期文件大小
-            if (filesize($cacheFile) >= $expectedSize * 0.8) { // 允许20%的误差
+            // 检查缓存文件是否有效
+            if (self::isValidCacheFile($cacheFile, $version)) {
                 self::$$staticVar = $cacheFile;
                 return $cacheFile;
             }
