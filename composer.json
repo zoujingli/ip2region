@@ -2,7 +2,7 @@
   "type": "library",
   "name": "zoujingli/ip2region",
   "homepage": "https://github.com/zoujingli/Ip2Region",
-  "description": "ip2region v3.0 for PHP - 企业级 IP 地理位置查询库，支持 IPv4/IPv6，分片文件管理，智能压缩，零依赖",
+  "description": "ip2region v3.0 for PHP - 企业级 IP 地理位置查询库，支持 IPv4 和 IPv6，智能分片管理，高性能缓存，零依赖",
   "license": "Apache-2.0",
   "authors": [
     {
