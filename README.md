@@ -62,7 +62,8 @@ ip2region/
 │   ├── ip2region_v4.xdb   # IPv4 完整数据库（需要下载）
 │   └── ip2region_v6.xdb   # IPv6 完整数据库（需要下载）
 ├── tests/                 # 测试文件
-│   └── demo.php           # 演示程序
+│   ├── demo.php           # 演示程序
+│   └── quick_performance_test.php # 性能测试脚本
 ├── function.php           # 全局函数入口
 ├── composer.json          # Composer 配置
 └── README.md              # 项目文档
@@ -401,6 +402,9 @@ composer test:memory    # 内存查询
 composer query 61.142.118.231
 composer query:search 61.142.118.231
 composer query:memory 61.142.118.231
+
+# 性能测试
+composer test:performance      # 快速性能测试
 
 # 分割 IPv4 数据库（gzip 压缩，需要先下载数据库文件）
 composer split:v4
@@ -775,6 +779,104 @@ echo "缓存文件数: " . $stats['file_count'] . "\n";
 3. **清理策略**：定期清理过期缓存，避免磁盘空间浪费
 4. **自定义路径**：对于高并发环境，建议使用自定义数据库路径
 5. **分片更新**：更新分片文件后，缓存会自动重新生成
+
+## 性能测试
+
+### 快速性能测试
+
+运行 `composer test:performance` 进行快速性能测试：
+
+```bash
+composer test:performance
+```
+
+**测试结果示例**：
+```
+测试环境信息:
+==================
+操作系统: Darwin 25.0.0
+PHP版本: 8.1.29
+内存限制: 128M
+最大执行时间: 0秒
+时区: UTC
+当前时间: 2025-09-18 02:46:44
+系统负载: 4.05, 3.18, 2.77
+当前内存使用: 4MB
+峰值内存使用: 4MB
+磁盘空间: 587.81GB 可用 / 926.35GB 总计
+CPU: Apple M4 Pro
+CPU核心数: 14
+
+首次加载 vs 缓存命中:
+  IPv4: 32.02ms → 0.5ms (提升 98.4%) (new Ip2Region() + simple())
+  IPv6: 1174.68ms → 1.03ms (提升 99.9%) (new Ip2Region() + simple())
+
+查询方法性能:
+  simple: 0.17ms (ip2region->simple())
+  search: 0.01ms (ip2region->search())
+  memorySearch: 0.01ms (ip2region->memorySearch())
+
+批量处理性能:
+  10个IP: 1.94ms (ip2region->batchSearch())
+  10000个IP: 100.75ms (ip2region->batchSearch())
+  10000次循环: 55.23ms (10000次 ip2region->simple())
+
+QPS性能:
+  10个IP: 5155 QPS
+  10000个IP: 99256 QPS
+  10000次循环: 181061 QPS
+
+缓存管理性能:
+  清理缓存: 0.23ms (Ip2Region::clearCache() + clearPersistentCache())
+
+性能评分: 100/100
+性能等级: 优秀 ⭐⭐⭐⭐⭐
+```
+
+### 性能测试内容
+
+快速性能测试包含以下项目：
+
+- 首次加载测试（无缓存）
+- 缓存命中测试
+- 不同查询方法性能对比
+- 批量查询测试（10个IP + 10000个IP）
+- 循环查询测试（10000次）
+- 内存使用测试
+- 缓存清理性能测试
+- 系统环境信息展示
+- 性能评分和等级评定
+
+### 性能特点
+
+#### 测试环境
+- **硬件配置**：Apple M4 Pro (14核心)，16GB+ 内存
+- **操作系统**：macOS 15.0 (Darwin 25.0.0)
+- **PHP版本**：8.1.29
+- **磁盘空间**：587GB+ 可用空间
+
+#### 性能指标
+1. **首次加载**：需要合并分片文件，IPv4 约 32ms，IPv6 约 1175ms (`new Ip2Region() + simple()`)
+2. **缓存命中**：直接使用缓存文件，IPv4 约 0.5ms，IPv6 约 1ms (`new Ip2Region() + simple()`)
+3. **性能提升**：IPv4 提升 98.4%，IPv6 提升 99.9%
+4. **查询方法**：
+   - `simple()`：约 0.17ms (格式化输出)
+   - `search()`：约 0.01ms (原始数据)
+   - `memorySearch()`：约 0.01ms (数组格式)
+5. **批量查询**：
+   - 10个IP：约 1.9ms (5155 QPS) (`ip2region->batchSearch()`)
+   - 10000个IP：约 101ms (99256 QPS) (`ip2region->batchSearch()`)
+   - 10000次循环：约 55ms (181061 QPS) (10000次 `ip2region->simple()`)
+6. **内存使用**：当前 4MB，峰值 76.55MB
+7. **缓存清理**：约 0.23ms (`Ip2Region::clearCache() + clearPersistentCache()`)
+8. **性能评分**：90/100 (优秀 ⭐⭐⭐⭐⭐)
+
+#### 性能等级说明
+- **90-100分**：优秀 ⭐⭐⭐⭐⭐ (企业级性能)
+- **80-89分**：良好 ⭐⭐⭐⭐ (生产环境推荐)
+- **70-79分**：中等 ⭐⭐⭐ (一般应用)
+- **60-69分**：及格 ⭐⭐ (基础应用)
+- **0-59分**：需要优化 ⭐ (性能不足)
 
 ## 故障排除
 

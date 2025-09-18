@@ -56,7 +56,8 @@
     "split:v4:zip": "php tools/split_db.php v4 100 zip",
     "split:v6:zip": "php tools/split_db.php v6 100 zip",
     "split:v4:none": "php tools/split_db.php v4 100 none",
-    "split:v6:none": "php tools/split_db.php v6 100 none"
+    "split:v6:none": "php tools/split_db.php v6 100 none",
+    "test:performance": "php tests/quick_performance_test.php"
   },
   "config": {
     "optimize-autoloader": true,
