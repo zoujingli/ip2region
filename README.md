@@ -705,6 +705,61 @@ echo "已清理所有缓存\n";
 ?>
 ```
 
+## FPM 环境优化
+
+### FPM 进程模型优化
+
+在 FPM（FastCGI Process Manager）环境下，每个进程处理完请求后会保持存活，但静态变量会在进程重启时丢失。本库已针对 FPM 环境进行了优化：
+
+#### 智能缓存机制
+
+1. **持久化缓存**：合并后的数据库文件会缓存到系统临时目录
+2. **缓存验证**：通过文件大小验证缓存文件的有效性
+3. **自动恢复**：进程重启后自动检测并使用有效的缓存文件
+4. **避免重复生成**：相同分片文件不会重复合并
+
+#### 缓存目录
+
+- **默认位置**：`/tmp/ip2region_cache/`（Linux/macOS）或 `C:\Users\用户名\AppData\Local\Temp\ip2region_cache\`（Windows）
+- **文件命名**：`ip2region_v4.xdb` 和 `ip2region_v6.xdb`
+- **自动清理**：支持手动清理过期缓存
+
+#### 性能优势
+
+```php
+<?php
+// 第一次请求：合并分片文件并缓存（较慢）
+$ip2region = new \Ip2Region();
+echo $ip2region->simple('61.142.118.231'); // 需要合并分片
+
+// 后续请求：直接使用缓存文件（极快）
+$ip2region = new \Ip2Region();
+echo $ip2region->simple('8.8.8.8'); // 直接使用缓存
+?>
+```
+
+#### 缓存管理
+
+```php
+<?php
+// 清理持久化缓存
+$cleared = \Ip2Region::clearPersistentCache();
+echo "已清理 {$cleared} 个缓存文件\n";
+
+// 获取缓存统计
+$stats = \Ip2Region::getCacheStats();
+echo "缓存目录: " . $stats['cache_dir'] . "\n";
+echo "缓存文件数: " . $stats['file_count'] . "\n";
+?>
+```
+
+#### 生产环境建议
+
+1. **预热缓存**：在应用启动时进行一次查询，预热缓存
+2. **监控缓存**：定期检查缓存文件大小和有效性
+3. **清理策略**：定期清理过期缓存，避免磁盘空间浪费
+4. **自定义路径**：对于高并发环境，建议使用自定义数据库路径
+
 ## 故障排除
 
 ### 常见问题

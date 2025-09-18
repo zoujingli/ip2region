@@ -54,12 +54,24 @@ class Ip2Region
     // 静态缓存，避免重复生成临时文件
     private static $mergedV4File = null;
     private static $mergedV6File = null;
+    
+    // 缓存文件路径，用于持久化缓存
+    private static $cacheDir = null;
 
     public function __construct($cachePolicy = 'file', $dbPathV4 = null, $dbPathV6 = null)
     {
         $this->cachePolicy = $cachePolicy;
         $this->dbPathV4 = $dbPathV4;
         $this->dbPathV6 = $dbPathV6;
+        
+        // 初始化缓存目录
+        if (self::$cacheDir === null) {
+            self::$cacheDir = sys_get_temp_dir() . '/ip2region_cache';
+            if (!is_dir(self::$cacheDir)) {
+                mkdir(self::$cacheDir, 0755, true);
+            }
+        }
+        
     }
 
     public function __destruct()
@@ -108,64 +120,65 @@ class Ip2Region
     }
 
     /**
+     * 获取或创建合并的数据库文件
+     */
+    private function getMergedDbFile($version)
+    {
+        $staticVar = $version === 'v4' ? 'mergedV4File' : 'mergedV6File';
+        $dbPath = $version === 'v4' ? $this->dbPathV4 : $this->dbPathV6;
+        
+        // 如果使用自定义数据库，直接返回
+        if ($dbPath !== null && file_exists($dbPath)) {
+            return $dbPath;
+        }
+        
+        // 检查静态缓存
+        if (self::$$staticVar !== null) {
+            return self::$$staticVar;
+        }
+        
+        // 检查持久化缓存
+        $cacheFile = self::$cacheDir . '/ip2region_' . $version . '.xdb';
+        if (file_exists($cacheFile)) {
+            // 检查缓存文件是否有效（通过文件大小判断）
+            $expectedSize = $version === 'v4' ? 11042429 : 617000000; // 预期文件大小
+            if (filesize($cacheFile) >= $expectedSize * 0.8) { // 允许20%的误差
+                self::$$staticVar = $cacheFile;
+                return $cacheFile;
+            }
+        }
+        
+        // 需要重新生成
+        $chunks = ChunkedDbHelper::findChunks(dirname(__DIR__) . '/tools/ip2region_' . $version . '.xdb');
+        
+        if (!empty($chunks)) {
+            // 合并到持久化缓存
+            $file = ChunkedDbHelper::mergeToCache($chunks, $cacheFile);
+            if (!$file) {
+                throw new Exception("无法合并分割的IPv{$version}数据库文件");
+            }
+            self::$$staticVar = $file;
+            return $file;
+        } else {
+            // 回退到完整文件
+            $file = dirname(__DIR__) . '/tools/ip2region_' . $version . '.xdb';
+            self::$$staticVar = $file;
+            return $file;
+        }
+    }
+
+    /**
      * 创建查询器
      */
     private function createSearcher($version)
     {
         try {
+            // 使用智能缓存机制获取数据库文件
+            $file = $this->getMergedDbFile($version);
+            
             if ($version === 'v4') {
-                // 优先使用自定义数据库路径
-                if ($this->dbPathV4 !== null && file_exists($this->dbPathV4)) {
-                    $file = $this->dbPathV4;
-                } else {
-                    // 使用 ChunkedDbHelper 处理分割的 IPv4 文件
-                    if (self::$mergedV4File === null) {
-                        // 查找 IPv4 分片文件
-                        $chunks = ChunkedDbHelper::findChunks(dirname(__DIR__) . '/tools/ip2region_v4.xdb');
-
-                        if (!empty($chunks)) {
-                            // 合并分割文件到缓存
-                            $file = ChunkedDbHelper::mergeToCache($chunks);
-                            if (!$file) {
-                                throw new Exception("无法合并分割的IPv4数据库文件");
-                            }
-                            self::$mergedV4File = $file;
-                        } else {
-                            // 回退到完整文件
-                            $file = dirname(__DIR__) . '/tools/ip2region_v4.xdb';
-                            self::$mergedV4File = $file;
-                        }
-                    } else {
-                        $file = self::$mergedV4File;
-                    }
-                }
                 $ipVersion = \ip2region\xdb\IPv4::default();
             } else {
-                // 优先使用自定义数据库路径
-                if ($this->dbPathV6 !== null && file_exists($this->dbPathV6)) {
-                    $file = $this->dbPathV6;
-                } else {
-                    // 使用 ChunkedDbHelper 处理分割的 IPv6 文件
-                    if (self::$mergedV6File === null) {
-                        // 直接查找分片文件，不依赖 getBaseFilePath
-                        $chunks = ChunkedDbHelper::findChunks(null);
-
-                        if (!empty($chunks)) {
-                            // 合并分割文件到缓存
-                            $file = ChunkedDbHelper::mergeToCache($chunks);
-                            if (!$file) {
-                                throw new Exception("无法合并分割的IPv6数据库文件");
-                            }
-                            self::$mergedV6File = $file;
-                        } else {
-                            // 回退到完整文件
-                            $file = dirname(__DIR__) . '/tools/ip2region_v6.xdb';
-                            self::$mergedV6File = $file;
-                        }
-                    } else {
-                        $file = self::$mergedV6File;
-                    }
-                }
                 $ipVersion = \ip2region\xdb\IPv6::default();
             }
 
@@ -319,6 +332,30 @@ class Ip2Region
     public static function clearExpiredCache($days = 7)
     {
         ChunkedDbHelper::clearExpiredCache($days);
+    }
+    
+    /**
+     * 清理持久化缓存
+     * 
+     * 清理系统临时目录中的持久化缓存文件
+     * 在 FPM 环境下，这可以避免重复生成合并文件
+     */
+    public static function clearPersistentCache()
+    {
+        if (self::$cacheDir === null) {
+            self::$cacheDir = sys_get_temp_dir() . '/ip2region_cache';
+        }
+        
+        if (is_dir(self::$cacheDir)) {
+            $files = glob(self::$cacheDir . '/ip2region_*.xdb');
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+            return count($files);
+        }
+        return 0;
     }
 
     /**

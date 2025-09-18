@@ -184,9 +184,10 @@ class ChunkedDbHelper
 	 * 使用文件锁确保并发安全，支持缓存机制避免重复合并
 	 * 
 	 * @param array $chunks 分片文件路径数组
+	 * @param string|null $cacheFile 可选的缓存文件路径，如果为null则自动生成
 	 * @return string|false 合并后的文件路径，失败返回false
 	 */
-	public static function mergeToCache(array $chunks)
+	public static function mergeToCache(array $chunks, $cacheFile = null)
 	{
 		self::ensureCacheDir();
 		if (empty($chunks)) {
@@ -202,8 +203,14 @@ class ChunkedDbHelper
 		// 分片系统独立工作：不需要依赖原始文件
 		// 先合并文件，再验证大小
 		$totalSize = 0; // 初始化为0，让合并过程自然计算大小
-		$key = md5(implode('|', $manifest));
-		$outFile = self::$cacheDir . DIRECTORY_SEPARATOR . 'merged_' . $key . '.xdb';
+		
+		// 如果指定了缓存文件路径，使用指定路径；否则自动生成
+		if ($cacheFile !== null) {
+			$outFile = $cacheFile;
+		} else {
+			$key = md5(implode('|', $manifest));
+			$outFile = self::$cacheDir . DIRECTORY_SEPARATOR . 'merged_' . $key . '.xdb';
+		}
 		$lockFile = $outFile . '.lock';
 
 		$lock = fopen($lockFile, 'c');
