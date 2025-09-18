@@ -54,16 +54,20 @@ ip2region/
 │   ├── Ip2Region.php      # 主类，支持 IPv4/IPv6 双协议
 │   ├── XdbSearcher.php    # 官方 xdb 查询器封装
 │   └── ChunkedDbHelper.php # 分片文件管理助手
-├── db/                    # 分片数据库文件（自动生成）
-│   ├── ip2region_v4.xdb.part1    # IPv4 数据库分片
-│   └── ip2region_v6.xdb.part*    # IPv6 数据库分片（多个文件）
-├── tools/                 # 工具脚本
-│   ├── split_db.php       # 数据库分片工具（重要！）
-│   ├── ip2region_v4.xdb   # IPv4 完整数据库（需要下载）
-│   └── ip2region_v6.xdb   # IPv6 完整数据库（需要下载）
+├── db/                    # 分片数据库文件（用户使用）
+│   ├── ip2region_v4.xdb.part1.zip    # IPv4 数据库分片
+│   └── ip2region_v6.xdb.part*.gz     # IPv6 数据库分片（多个文件）
+├── tools/                 # 开发工具（内部使用）
+│   ├── split_db.php       # 数据库分片工具
+│   ├── ip2region_v4.xdb   # IPv4 完整数据库（开发用）
+│   └── ip2region_v6.xdb   # IPv6 完整数据库（开发用）
 ├── tests/                 # 测试文件
 │   ├── demo.php           # 演示程序
 │   └── quick_performance_test.php # 性能测试脚本
+├── doc/                   # 详细文档
+│   ├── API.md             # API 参考
+│   ├── CUSTOM_DB_USAGE.md # 自定义数据库使用说明
+│   └── DATABASE_DOWNLOAD.md # 数据库下载说明
 ├── function.php           # 全局函数入口
 ├── composer.json          # Composer 配置
 └── README.md              # 项目文档
@@ -71,10 +75,13 @@ ip2region/
 
 > **💡 重要提示**：
 >
-> -   `db/` 目录中的分片文件是通过 `tools/split_db.php` 工具从 `tools/` 目录的完整数据库文件生成的
-> -   `db/` 目录中的分片文件是压缩后的数据库文件，用于自动合并
-> -   文件名必须严格按照 `ip2region_v4.xdb` 和 `ip2region_v6.xdb` 命名，不能有任何变化
+> -   `db/` 目录包含分片数据库文件，用户直接使用，无需关心内部实现
+> -   `tools/` 目录是开发工具，包含：
+>     -   `split_db.php`：数据库分片工具（开发发布用）
+>     -   `ip2region_v4.xdb`：IPv4 完整数据库（开发用）
+>     -   `ip2region_v6.xdb`：IPv6 完整数据库（开发用）
 > -   项目已包含分片文件，可直接使用，无需手动生成
+> -   如需自定义数据库，请参考 [自定义数据库使用说明](doc/CUSTOM_DB_USAGE.md)
 
 ## 🆕 v3.0 新增功能
 
@@ -112,16 +119,35 @@ composer require zoujingli/ip2region:^3.0
 composer require zoujingli/ip2region:^2.0
 ```
 
-### 2. 数据库文件准备
+### 2. 自定义数据库配置
 
 项目已包含分片数据库文件，可直接使用。如需使用自定义数据库：
 
-```bash
-# 下载完整数据库文件到 tools/ 目录
-# 然后生成分片文件
-php tools/split_db.php v4    # IPv4 分片
-php tools/split_db.php v6    # IPv6 分片
+```php
+<?php
+require 'vendor/autoload.php';
+
+try {
+    // 使用自定义数据库路径（建议使用绝对路径）
+    $ip2region = new \Ip2Region('file', 
+        '/path/to/your/ip2region_v4.xdb',  // IPv4 数据库路径
+        '/path/to/your/ip2region_v6.xdb'   // IPv6 数据库路径
+    );
+    
+    // 查询示例
+    echo $ip2region->simple('61.142.118.231') . "\n";
+    echo $ip2region->simple('2001:4860:4860::8888') . "\n";
+    
+} catch (Exception $e) {
+    echo "错误: " . $e->getMessage() . "\n";
+}
+?>
 ```
+
+**获取数据库文件**：
+- **免费版本**：从 [ip2region 官方仓库](https://github.com/lionsoul2014/ip2region) 下载
+- **商业版本**：从 [ip2region 官网](https://www.ip2region.net/) 购买或下载
+- **详细说明**：请参考 [自定义数据库使用说明](doc/CUSTOM_DB_USAGE.md)
 
 ### 3. 一行代码开始使用
 
@@ -346,7 +372,9 @@ tools/
 -   **版本选择**：建议使用最新版本以获得最准确的地理位置数据
 -   **重要提醒**：自定义数据库文件需要从官网下载或购买，确保使用正版数据源
 
-#### 2. 生成分片文件
+#### 2. 分片工具（开发用）
+
+> **⚠️ 注意**：此工具仅用于开发发布，普通用户无需使用。项目已包含分片文件，可直接使用。
 
 使用项目提供的分片工具将大文件分割为小文件，支持压缩以减小文件大小：
 
@@ -1027,6 +1055,25 @@ ls -la db/ip2region_v*.xdb*
     - **分片大小**：建议 50-100MB，平衡压缩效果和处理速度
 
 ## 更新日志
+
+### v3.0.2 (2025-09-18) 🚀
+
+#### 🚀 FPM 环境优化
+- **持久化缓存**：智能缓存机制，避免重复合并分片文件
+- **缓存验证**：基于文件大小、时间戳、内容格式的智能验证
+- **性能提升**：IPv4 提升 98.4%，IPv6 提升 99.9%
+- **自动恢复**：进程重启后自动检测并使用有效缓存
+
+#### 📊 性能测试增强
+- **系统信息**：详细的硬件配置和系统环境展示
+- **性能评分**：基于多维度指标的综合性能评分系统
+- **方法说明**：每个测试都显示具体调用的方法
+- **测试覆盖**：首次加载、缓存命中、批量查询、循环测试
+
+#### 📚 文档完善
+- **优先级说明**：详细的数据库优先级机制说明
+- **自定义配置**：完整的自定义数据库配置指南
+- **项目结构**：优化的项目结构说明和目录分类
 
 ### v3.0.1 (2025-09-16) 🔧
 
