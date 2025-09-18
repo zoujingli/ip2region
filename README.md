@@ -7,7 +7,7 @@
 
 # ip2region v3.0
 
-> 🚀 **企业级 IP 地理位置查询库**：基于官方 ip2region 深度优化，支持 IPv4/IPv6，分片文件管理，智能压缩，零依赖
+🚀 **企业级 IP 地理位置查询库**：基于官方 ip2region 深度优化，支持 IPv4/IPv6，分片文件管理，智能压缩，零依赖
 
 本库基于 [ip2region](https://github.com/lionsoul2014/ip2region) 深度整合优化，专为 `PHP` 项目量身定制，提供企业级 IP 地理位置查询服务。
 
