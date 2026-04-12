@@ -371,9 +371,6 @@ class Searcher
      * echo "IP版本: " . $version->id; // 输出：4
      * ```
      */
-    /**
-     * @return IPv4|IPv6
-     */
     public function getIPVersion()
     {
         return $this->version;
