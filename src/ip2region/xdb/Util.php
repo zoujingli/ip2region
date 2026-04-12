@@ -903,7 +903,7 @@ class Util
         } else if ($name == "V6" || $name == "IPV6") {
             return IPv6::default();
         } else {
-            throw new \Exception("invalid verstion name `{$ver_name}`");
+            throw new \Exception("invalid version name `{$ver_name}`");
         }
     }
 
