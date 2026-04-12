@@ -161,7 +161,7 @@ class Searcher
             // open the xdb binary file
             $this->handle = fopen($dbFile, "r");
             if ($this->handle === false) {
-                throw new \Exception("failed to open xdb file '%s'", $dbFile);
+                throw new \Exception(sprintf("failed to open xdb file `%s`", $dbFile));
             }
 
             $this->vectorIndex = $vectorIndex;
@@ -319,17 +319,19 @@ class Searcher
         // read from the file
         $r = fseek($this->handle, $offset);
         if ($r == -1) {
-            throw new \Exception("failed to fseek to {$offset}");
+            throw new \Exception("failed to fseek to offset {$offset}");
         }
 
         $this->ioCount++;
         $buff = fread($this->handle, $len);
         if ($buff === false) {
-            throw new \Exception("failed to fread from {$len}");
+            throw new \Exception("failed to fread {$len} bytes at offset {$offset}");
         }
 
         if (strlen($buff) != $len) {
-            throw new \Exception("incomplete read: read bytes should be {$len}");
+            throw new \Exception(
+                sprintf('incomplete read at offset %d: expected %d bytes, got %d', $offset, $len, strlen($buff))
+            );
         }
 
         return $buff;
