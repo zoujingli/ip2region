@@ -244,6 +244,11 @@ class Searcher
         }
 
         // printf("sPtr: %d, ePtr: %d\n", $sPtr, $ePtr);
+        // @Note: ptr validate, zero ptr means source data missing (same as upstream binding/php/xdb)
+        if ($sPtr == 0 || $ePtr == 0) {
+            return "";
+        }
+
         list($bytes, $dBytes) = [strlen($ipBytes), strlen($ipBytes) << 1];
 
         // binary search the segment index to get the region info
