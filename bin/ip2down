@@ -11,7 +11,7 @@
  * - 帮助：./vendor/bin/ip2down help
  *
  * @author Anyon <zoujingli@qq.com>
- * @version 3.0.5
+ * @version 3.0.14
  */
 
 // 环境检查
@@ -96,8 +96,8 @@ class DatabaseManager
                         ),
                         'file'    => 'ip2region_v6.xdb',
                         'desc'    => 'IPv6 数据库',
-                        // 官方文件当前约 40.64MB（40642287 bytes），这里设置下限避免下载到 HTML/错误页
-                        'minSize' => 38 * 1024 * 1024
+                        // 官方文件当前约 36.09MB（36086712 bytes），这里设置较低下限避免下载到 HTML/错误页
+                        'minSize' => 30 * 1024 * 1024
                 )
         );
         $pathInfo = detectProjectPath();

@@ -13,7 +13,7 @@
 
 > ⚠️ **重要提示**：
 > - **IPv4 查询**：✅ 开箱即用，无需下载
-> - **IPv6 查询**：⚠️ **需要下载完整数据库**（约 40.64MB / 38.76MiB / 40642287 bytes），请使用 `./vendor/bin/ip2down download v6`（下载到 `vendor/bin/ip2data/` 后自动生效），或手动下载到 `db/`
+> - **IPv6 查询**：⚠️ **需要下载完整数据库**（约 36.09MB / 34.42MiB / 36086712 bytes），请使用 `./vendor/bin/ip2down download v6`（下载到 `vendor/bin/ip2data/` 后自动生效），或手动下载到 `db/`
 
 > 📢 **v3.0 更新**：
 > - ✅ **代码优化**：工具代码减少 48.7%，更简洁高效
@@ -32,7 +32,7 @@
 | 特性          | 描述                                        |
 | ------------- | ------------------------------------------- |
 | **IPv4 支持** | ✅ 开箱即用，内置数据库文件                  |
-| **IPv6 支持** | ⚠️ 需要下载完整数据库（约 40.64MB / 38.76MiB / 40642287 bytes） |
+| **IPv6 支持** | ⚠️ 需要下载完整数据库（约 36.09MB / 34.42MiB / 36086712 bytes） |
 | **PHP 7.1+**  | ✅ 需要 PHP 7.1+，全面使用类型声明          |
 | 缓存策略      | ✅ 支持 file、vectorIndex、content 三种模式  |
 | 性能          | ✅ 极快，微秒级响应                         |
@@ -45,7 +45,7 @@ ip2region 是一个高性能的 IP 地址定位库，**支持 IPv4 和 IPv6 地�
 
 **V3.0 核心特性**：
 - 🚀 **开箱即用**：IPv4 查询无需下载，直接使用内置数据库文件
-- ⚠️ **IPv6 按需下载**：IPv6 查询需要下载完整数据库（约 40.64MB / 38.76MiB / 40642287 bytes）
+- ⚠️ **IPv6 按需下载**：IPv6 查询需要下载完整数据库（约 36.09MB / 34.42MiB / 36086712 bytes）
 - ⚡ **多种缓存策略**：支持 file、vectorIndex、content 三种缓存模式
 - 📦 **简化部署**：直接使用未压缩的 xdb 文件，无需解压过程
 - 🔧 **PHP 7.1+ 优化**：全面使用类型声明，提升代码质量和 IDE 支持
@@ -67,7 +67,7 @@ echo ip2region('114.114.114.114');
 -   **⚡ 高性能**：基于官方 xdb 格式，查询速度极快，微秒级响应
 -   **📦 零依赖**：纯 PHP 实现，需要 PHP 7.1+，无需额外扩展
 -   **🚀 开箱即用**：IPv4 查询无需下载，直接使用内置文件
--   **⚠️ IPv6 支持**：IPv6 查询需要下载完整数据库（约 40.64MB / 38.76MiB / 40642287 bytes）
+-   **⚠️ IPv6 支持**：IPv6 查询需要下载完整数据库（约 36.09MB / 34.42MiB / 36086712 bytes）
 -   **🔧 自定义数据库**：支持自定义 IPv4/IPv6 数据库路径配置
 -   **🔧 易集成**：支持 Composer 安装，提供函数式和面向对象两种 API
 -   **💾 智能加载**：自动按优先级查找数据库文件，无需手动管理
@@ -139,7 +139,7 @@ ip2region/
 │           ├── IPv4.php       # IPv4 处理类（ip2region\xdb\IPv4）
 │           ├── IPv6.php       # IPv6 处理类（ip2region\xdb\IPv6）
 │           └── Searcher.php   # 搜索引擎类（ip2region\xdb\Searcher）
-├── db/                    # 数据库文件目录（已包含）
+├── db/                    # 数据库文件目录（内置 IPv4）
 │   └── ip2region_v4.xdb          # IPv4 数据库文件（未压缩）
 ├── vendor/
 │   └── bin/
@@ -159,7 +159,7 @@ ip2region/
 > **💡 重要提示**：
 >
 > -   **IPv4 查询**：✅ 开箱即用，项目已包含数据库文件
-> -   **IPv6 查询**：⚠️ 需要下载完整数据库文件（约 40.64MB / 38.76MiB / 40642287 bytes），推荐使用 `ip2down download v6`
+> -   **IPv6 查询**：⚠️ 需要下载完整数据库文件（约 36.09MB / 34.42MiB / 36086712 bytes），推荐使用 `ip2down download v6`
 > -   **自定义数据库**：支持通过构造函数指定自定义数据库路径
 > -   **数据库文件**：IPv4 使用内置 xdb；IPv6 需下载后自动生效（可放到 `vendor/bin/ip2data/` 或 `db/`）
 
@@ -201,7 +201,7 @@ composer require zoujingli/ip2region:^3.0
 
 ### 2. 下载数据库文件
 
-> 💡 **说明**：IPv4 数据库已内置到 `db/`，可开箱即用；IPv6 数据库需要额外下载（约 40.64MB / 38.76MiB / 40642287 bytes），下载后会被自动识别并使用。
+> 💡 **说明**：IPv4 数据库已内置到 `db/`，可开箱即用；IPv6 数据库需要额外下载（约 36.09MB / 34.42MiB / 36086712 bytes），下载后会被自动识别并使用。
 
 **IPv4 查询**：✅ 开箱即用，无需下载
 **IPv6 查询**：⚠️ 需要下载完整数据库文件
@@ -209,7 +209,7 @@ composer require zoujingli/ip2region:^3.0
 **方法一：使用下载工具（推荐）**
 
 ```bash
-# 下载 IPv6 数据库（约 40.64MB / 38.76MiB / 40642287 bytes，支持实时进度显示）
+# 下载 IPv6 数据库（约 36.09MB / 34.42MiB / 36086712 bytes，支持实时进度显示）
 ./vendor/bin/ip2down download v6
 
 # 下载所有数据库
@@ -241,7 +241,7 @@ composer require zoujingli/ip2region:^3.0
 # 创建数据库目录
 mkdir -p db
 
-# 下载 IPv6 数据库（约 40.64MB / 38.76MiB / 40642287 bytes）
+# 下载 IPv6 数据库（约 36.09MB / 34.42MiB / 36086712 bytes）
 # 方法1：使用 GitHub 原始链接（推荐）
 # 首选：代理下载
 wget -O db/ip2region_v6.xdb "https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb"
@@ -259,21 +259,21 @@ curl -L -o db/ip2region_v6.xdb "https://gh-proxy.org/https://raw.githubuserconte
 ```
 
 > 💡 **下载提示**：
-> - **IPv4**：已包含在项目中，无需下载（约 11.38MB / 10.85MiB / 11380741 bytes）
+> - **IPv4**：已包含在项目中，无需下载（约 10.64MB / 10.15MiB / 10641955 bytes）
 > - **IPv6**：推荐使用 GitHub 原始链接，也可尝试 Gitee 镜像（如果可用）
-> - **文件大小**：IPv6 数据库约 40.64MB（38.76MiB / 40642287 bytes），超过 CDN 限制，需使用原始链接
+> - **文件大小**：IPv6 数据库约 36.09MB（34.42MiB / 36086712 bytes），建议使用原始链接或下载工具
 
-**方法二：使用下载工具（推荐）**
+**方法三：使用 Composer 脚本或下载工具**
 
 ```bash
-# 下载 IPv6 数据库（约 40.64MB / 38.76MiB / 40642287 bytes，支持实时进度显示）
+# 下载 IPv6 数据库（约 36.09MB / 34.42MiB / 36086712 bytes，支持实时进度显示）
 ./vendor/bin/ip2down download v6
 
 # 或者下载所有数据库
 ./vendor/bin/ip2down download all
 
 # 尝试自动下载（可能因网络问题失败）
-composer download-db
+composer download
 
 # 查看已下载的文件
 ./vendor/bin/ip2down list
@@ -283,24 +283,24 @@ composer download-db
 ```
 
 **进度显示特性**：
-- ✅ **实时进度**：显示下载速度和预计剩余时间
-- ✅ **自动估算**：基于文件大小估算完成时间
+- ✅ **实时进度**：显示已下载大小和下载速度
+- ✅ **大小校验**：下载完成后按最小文件大小校验，避免保存错误页
 - ✅ **流式下载**：避免大文件内存溢出
-- ✅ **断点续传**：支持网络中断后重新下载
+- ✅ **失败清理**：下载文件过小时自动清理，避免保留错误页或残缺文件
 
 **进度显示示例**：
 ```bash
-正在下载 IPv6 数据库...
-已下载: 9.3 MB - 4.65 MB/s - 预计剩余 12s
-已下载: 22.62 MB - 5.65 MB/s - 预计剩余 10s
-已下载: 30.1 MB - 6.97 MB/s - 预计剩余 5s
+开始下载 IPv6 数据库...
+已下载: 9.02 MB 速度: 3.01 MB/s
+已下载: 22.03 MB 速度: 3.67 MB/s
+已下载: 30.05 MB 速度: 3.34 MB/s
 ...
-✅ 下载完成: IPv6 数据库 (40.64 MB)
+✅ 下载完成: IPv6 数据库 (36.09 MB)
 ```
 
 > 📝 **注意**：
-> - IPv4 数据库可以正常自动下载（约 11.38MB / 10.85MiB / 11380741 bytes）
-> - IPv6 数据库（约 40.64MB / 38.76MiB / 40642287 bytes），建议使用下载工具或手动下载
+> - IPv4 数据库可以正常自动下载（约 10.64MB / 10.15MiB / 10641955 bytes）
+> - IPv6 数据库（约 36.09MB / 34.42MiB / 36086712 bytes），建议使用下载工具或手动下载
 
 ### 数据库优先级
 
@@ -308,11 +308,11 @@ composer download-db
 
 1. **自定义数据库**：通过构造函数指定的 `.xdb` 文件路径
 2. **下载的数据库**：通过 `ip2down` 工具下载的完整数据库文件
-3. **默认路径**：`db/` 目录下的内置文件（IPv4 和 IPv6）
+3. **默认路径**：`db/` 目录下的内置 IPv4 文件；IPv6 可手动放入 `db/`
 
 > ⚠️ **重要**：
 > - **IPv4**：使用未压缩 xdb 文件，开箱即用
-> - **IPv6**：需要下载完整数据库文件（约 40.64MB / 38.76MiB / 40642287 bytes）
+> - **IPv6**：需要下载完整数据库文件（约 36.09MB / 34.42MiB / 36086712 bytes）
 
 ### 3. 自定义数据库配置
 
@@ -337,7 +337,7 @@ try {
 
 **获取数据库文件**：
 - **IPv4 数据库**：✅ 已包含在项目中，无需下载
-- **IPv6 数据库**：⚠️ **需要下载**（约 40.64MB / 38.76MiB / 40642287 bytes）
+- **IPv6 数据库**：⚠️ **需要下载**（约 36.09MB / 34.42MiB / 36086712 bytes）
   - [代理下载（推荐）](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb)
   - [官方直链（备用）](https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb)
   - [Gitee 镜像](https://gitee.com/lionsoul/ip2region/raw/master/data/ip2region_v6.xdb)（国内访问更快，如果可用）
@@ -355,7 +355,7 @@ echo ip2region('61.142.118.231') . "\n"; // 中国广东省中山市【电信】
 echo ip2region('2400:3200::1') . "\n"; // 中国浙江省杭州市【专线用户】（需要下载完整数据库）
 
 // 使用不同查询方法
-echo ip2region('61.142.118.231', 'search'); // 中国|广东省|中山市|电信
+echo ip2region('61.142.118.231', 'search'); // 中国|广东省|中山市|电信|CN
 echo ip2region('61.142.118.231', 'memory'); // 返回数组格式
 
 // 或者使用类方式
@@ -393,7 +393,7 @@ echo ip2region('61.142.118.231') . "\n";        // 中国广东省中山市【�
 echo ip2region('2400:3200::1') . "\n"; // 中国浙江省杭州市【专线用户】
 
 // 使用不同查询方法
-echo ip2region('61.142.118.231', 'search') . "\n"; // 中国|广东省|中山市|电信
+echo ip2region('61.142.118.231', 'search') . "\n"; // 中国|广东省|中山市|电信|CN
 echo ip2region('61.142.118.231', 'memory') . "\n"; // 返回数组格式
 
 // 批量查询
@@ -475,7 +475,7 @@ try {
     // 获取数据库配置信息
     $dbInfo = $ip2region->getDatabaseInfo();
     echo "IPv4 路径: " . ($dbInfo['custom_v4_path'] ?: '默认内置') . "\n";
-    echo "IPv6 路径: " . ($dbInfo['custom_v6_path'] ?: '默认内置/可能需要下载') . "\n";
+    echo "IPv6 路径: " . ($dbInfo['custom_v6_path'] ?: '下载目录/默认路径/需下载') . "\n";
 
 } catch (Exception $e) {
     echo "错误: " . $e->getMessage() . "\n";
@@ -491,14 +491,14 @@ ip2region 库按照以下优先级自动查找数据库文件：
 
 1. **自动路径**：通过构造函数指定的自定义数据库路径
 2. **vendor 目录**：`vendor/bin/ip2data/` 目录下的下载文件
-3. **默认路径**：`db/` 目录下的内置文件（本仓库包含 IPv4/IPv6；Composer 安装场景可能只包含 IPv4）
+3. **默认路径**：`db/` 目录下的内置文件（本仓库内置 IPv4；IPv6 需下载到 `vendor/bin/ip2data/` 或通过自定义路径提供）
 
 ### 使用预置数据库
 
-本仓库已包含官方数据库文件，位于 `db/` 目录：
+本仓库已包含 IPv4 官方数据库文件，位于 `db/` 目录：
 
 -   `ip2region_v4.xdb` - IPv4 数据库文件（已包含）
--   `ip2region_v6.xdb` - IPv6 数据库文件（已包含；若你的项目缺失，可用 `ip2down download v6` 下载到 `vendor/bin/ip2data/`）
+-   `ip2region_v6.xdb` - IPv6 数据库文件（未内置；可用 `ip2down download v6` 下载到 `vendor/bin/ip2data/`，或手动放入 `db/`）
 
 ### PHAR 环境使用
 
@@ -542,15 +542,15 @@ db/
 
 -   **IPv4 数据库**：已包含在 `db/` 目录，可直接使用
 -   **IPv6 数据库**：需要从官方仓库下载到 `db/` 目录
--   **文件大小**：IPv4 约 11.38MB（10.85MiB / 11380741 bytes），IPv6 约 40.64MB（38.76MiB / 40642287 bytes）
+-   **文件大小**：IPv4 约 10.64MB（10.15MiB / 10641955 bytes），IPv6 约 36.09MB（34.42MiB / 36086712 bytes）
 -   **文件格式**：必须是有效的 xdb 格式文件
 
 **获取数据库文件**：
 
 -   **免费版本**：从 [ip2region 官方仓库](https://github.com/lionsoul2014/ip2region) 下载
--   IPv4 数据库（代理优先）：[ip2region_v4.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb) (约 11.38MB / 10.85MiB / 11380741 bytes)
+-   IPv4 数据库（代理优先）：[ip2region_v4.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb) (约 10.64MB / 10.15MiB / 10641955 bytes)
     - 备用直链：`https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb`
--   IPv6 数据库（代理优先）：[ip2region_v6.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb) (约 40.64MB / 38.76MiB / 40642287 bytes)
+-   IPv6 数据库（代理优先）：[ip2region_v6.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb) (约 36.09MB / 34.42MiB / 36086712 bytes)
     - 备用直链：`https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb`
 -   **商业版本**：从 [ip2region 官网](https://www.ip2region.net/) 购买或下载
 -   **格式要求**：确保下载的是 `.xdb` 格式，不是 `.txt` 或其他格式
@@ -564,7 +564,7 @@ db/
 ```
 db/
 ├── ip2region_v4.xdb    # IPv4 数据库文件（已包含）
-└── ip2region_v6.xdb    # IPv6 数据库文件（本仓库已包含；若你的项目缺失可下载）
+└── ip2region_v6.xdb    # IPv6 数据库文件（手动下载后可放置）
 ```
 
 #### 3. 验证数据库文件
@@ -649,11 +649,11 @@ composer version
 
     // 详细查询
     echo ip2region('61.142.118.231', 'search');
-    // 输出: 中国|广东省|中山市|电信
+    // 输出: 中国|广东省|中山市|电信|CN
 
     // 内存查询（返回数组）
     $result = ip2region('61.142.118.231', 'memory');
-    // 输出: Array([city_id] => 0, [region] => 中国|广东省|中山市|电信)
+    // 输出: Array([city_id] => 0, [region] => 中国|广东省|中山市|电信|CN)
 
     // IPv6 查询
     echo ip2region('2400:3200::1');
@@ -676,10 +676,10 @@ composer version
 | 方法名   | 描述             | 返回值类型 | 性能特点 | 适用场景               | 示例输出                                              |
 | -------- | ---------------- | ---------- | -------- | ---------------------- | ----------------------------------------------------- |
 | `simple` | 简单查询（默认） | string     | 最快     | 一般查询，用户友好显示 | `中国广东省中山市【电信】`                            |
-| `search` | 详细查询         | string     | 快       | 需要原始数据格式       | `中国\|广东省\|中山市\|电信`                          |
-| `memory` | 内存查询         | array      | 快       | 需要结构化数据         | `{"city_id":0,"region":"中国\|广东省\|中山市\|电信"}` |
-| `binary` | 二进制搜索       | array      | 中等     | 有序数据快速查找       | `{"city_id":0,"region":"中国\|广东省\|中山市\|电信"}` |
-| `btree`  | B 树索引         | array      | 中等     | 大规模数据平衡查询     | `{"city_id":0,"region":"中国\|广东省\|中山市\|电信"}` |
+| `search` | 详细查询         | string     | 快       | 需要原始数据格式       | `中国\|广东省\|中山市\|电信\|CN`                          |
+| `memory` | 内存查询         | array      | 快       | 需要结构化数据         | `{"city_id":0,"region":"中国\|广东省\|中山市\|电信\|CN"}` |
+| `binary` | 二进制搜索       | array      | 中等     | 有序数据快速查找       | `{"city_id":0,"region":"中国\|广东省\|中山市\|电信\|CN"}` |
+| `btree`  | B 树索引         | array      | 中等     | 大规模数据平衡查询     | `{"city_id":0,"region":"中国\|广东省\|中山市\|电信\|CN"}` |
 
 #### 使用建议
 
@@ -688,7 +688,7 @@ composer version
 -   **程序集成**：使用 `memory` 方法，获取结构化数组数据
 -   **性能优化**：根据数据量选择 `binary` 或 `btree` 方法
 -   **异常处理**：始终使用 try-catch 包装函数调用
--   **IPv6 支持**：⚠️ IPv6 查询需要先下载完整数据库（约 40.64MB / 38.76MiB / 40642287 bytes）
+-   **IPv6 支持**：⚠️ IPv6 查询需要先下载完整数据库（约 36.09MB / 34.42MiB / 36086712 bytes）
 
 ### Ip2Region 类
 
@@ -701,7 +701,7 @@ new Ip2Region($cachePolicy = 'file', $dbPathV4 = null, $dbPathV6 = null)
 -   **参数**：
     -   `$cachePolicy` (string) - 缓存策略：'file', 'vectorIndex', 'content'
     -   `$dbPathV4` (string|null) - IPv4 数据库文件路径，null 表示使用默认路径
-    -   `$dbPathV6` (string|null) - IPv6 数据库文件路径，null 表示需要下载
+    -   `$dbPathV6` (string|null) - IPv6 数据库文件路径，null 表示自动查找下载目录或默认路径
 
 -   **缓存策略说明**：
     -   `file`：文件缓存模式（默认），适合大文件，内存占用少
@@ -740,14 +740,14 @@ new Ip2Region($cachePolicy = 'file', $dbPathV4 = null, $dbPathV6 = null)
 -   **功能**：基础查询，返回原始结果
 -   **参数**：`$ip` (string) - IP 地址
 -   **返回**：`string|null` - 原始查询结果
--   **示例**：`$ip2region->search('61.142.118.231'); // 中国|广东省|中山市|电信`
+-   **示例**：`$ip2region->search('61.142.118.231'); // 中国|广东省|中山市|电信|CN`
 
 ##### `memorySearch($ip)`
 
 -   **功能**：内存查询，返回数组格式
 -   **参数**：`$ip` (string) - IP 地址
 -   **返回**：`array` - 包含 city_id 和 region 的数组
--   **示例**：`$ip2region->memorySearch('61.142.118.231'); // ['city_id' => 0, 'region' => '中国|广东省|中山市|电信']`
+-   **示例**：`$ip2region->memorySearch('61.142.118.231'); // ['city_id' => 0, 'region' => '中国|广东省|中山市|电信|CN']`
 
 ##### `batchSearch($ips)`
 
@@ -1091,15 +1091,15 @@ QPS性能:
 **错误信息**：`数据库文件不存在: /path/to/ip2region_v4.xdb`
 **解决方案**：
 
--   **检查文件位置**：确保 IPv4 源数据库文件存在于 `tools/` 目录下
+-   **检查文件位置**：确保 IPv4 数据库文件存在于 `db/` 目录下，或通过 `ip2down` 下载到 `vendor/bin/ip2data/`
 -   **检查文件名**：IPv4 源文件必须严格按照 `ip2region_v4.xdb` 命名
 -   **检查文件权限**：确保文件可读
--   **下载 IPv6 数据库**：从官方仓库下载 IPv6 的 `.xdb` 文件到 `tools/` 目录
+-   **下载 IPv6 数据库**：从官方仓库下载 IPv6 的 `.xdb` 文件到 `vendor/bin/ip2data/` 或 `db/` 目录
 -   **获取数据源**：
     -   免费版本：从 [ip2region 官方仓库](https://github.com/lionsoul2014/ip2region) 下载
-        -   IPv4（代理优先）：[ip2region_v4.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb) (约 11.38MB / 10.85MiB / 11380741 bytes)
+        -   IPv4（代理优先）：[ip2region_v4.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb) (约 10.64MB / 10.15MiB / 10641955 bytes)
             - 备用直链：`https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb`
-        -   IPv6（代理优先）：[ip2region_v6.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb) (约 40.64MB / 38.76MiB / 40642287 bytes)
+        -   IPv6（代理优先）：[ip2region_v6.xdb](https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb) (约 36.09MB / 34.42MiB / 36086712 bytes)
             - 备用直链：`https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb`
     -   商业版本：从 [ip2region 官网](https://www.ip2region.net/) 购买或下载
 -   **数据库文件**：直接使用未压缩的 xdb 文件，无需额外处理
@@ -1111,8 +1111,8 @@ QPS性能:
 ls -la db/ip2region_v*.xdb*
 
 # 应该看到类似输出：
-# -rw-r--r-- 1 user staff 11380741 Jan 17 10:00 db/ip2region_v4.xdb
-# -rw-r--r-- 1 user staff 40642287 Jan 17 10:00 db/ip2region_v6.xdb
+# -rw-r--r-- 1 user staff 10641955 May 08 10:21 db/ip2region_v4.xdb
+# -rw-r--r-- 1 user staff 36086712 May 08 10:21 db/ip2region_v6.xdb
 ```
 
 #### 2. 内存不足
@@ -1196,7 +1196,7 @@ ip2region(string $ip, string $method = 'simple'): string|array|null
 | 方法     | 描述             | 返回值                 | 示例                   |
 | -------- | ---------------- | ---------------------- | ---------------------- |
 | `simple` | 简单查询（默认） | 格式化的地理位置字符串 | `"中国广东省中山市【电信】"`     |
-| `search` | 详细查询         | 管道分隔的详细信息     | `"中国\|0\|0\|电信"` |
+| `search` | 详细查询         | 管道分隔的详细信息     | `"中国\|广东省\|中山市\|电信\|CN"` |
 | `binary` | 二进制查询       | 原始二进制数据         | 二进制字符串           |
 | `btree`  | B 树查询         | B 树索引查询结果       | 查询结果字符串         |
 | `memory` | 内存查询         | 内存中的查询结果       | 查询结果字符串         |
@@ -1211,11 +1211,11 @@ require 'vendor/autoload.php';
 echo ip2region('61.142.118.231'); // 输出: 中国广东省中山市【电信】
 
 // 详细查询
-echo ip2region('61.142.118.231', 'search'); // 输出: 中国|广东省|中山市|电信
+echo ip2region('61.142.118.231', 'search'); // 输出: 中国|广东省|中山市|电信|CN
 
 // 内存查询（返回数组）
 $result = ip2region('61.142.118.231', 'memory');
-print_r($result); // 输出: Array([city_id] => 0, [region] => 中国|广东省|中山市|电信)
+print_r($result); // 输出: Array([city_id] => 0, [region] => 中国|广东省|中山市|电信|CN)
 
 // IPv6查询
 echo ip2region('2400:3200::1'); // 输出: 中国浙江省杭州市【专线用户】
@@ -1234,7 +1234,7 @@ if ($result === null) {
 -   **智能加载**：自动按优先级查找数据库文件
 -   **异常安全**：查询失败返回 null，不会抛出异常
 -   **静态实例**：使用静态实例，避免重复初始化
--   **IPv6 支持**：⚠️ IPv6 查询需要先下载完整数据库（约 40.64MB / 38.76MiB / 40642287 bytes）
+-   **IPv6 支持**：⚠️ IPv6 查询需要先下载完整数据库（约 36.09MB / 34.42MiB / 36086712 bytes）
 
 ## 📚 相关链接
 -   [V3.0 版本文档](https://github.com/zoujingli/ip2region/tree/master) - 完整版本，支持 IPv4 + IPv6

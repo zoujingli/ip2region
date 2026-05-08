@@ -27,7 +27,7 @@ if (!function_exists('ip2region')) {
      *
      * **支持的查询方法：**
      * - `simple` (默认): 返回格式化的地理位置字符串，如 "中国广东省中山市【电信】"
-     * - `search`: 返回原始查询结果，如 "中国|广东省|中山市|电信"
+     * - `search`: 返回原始查询结果，如 "中国|广东省|中山市|电信|CN"
      * - `memory`: 返回数组格式，包含 city_id 和 region 字段
      * - `binary`: 使用二进制搜索算法，返回数组格式
      * - `btree`: 使用 B 树索引算法，返回数组格式
@@ -43,10 +43,10 @@ if (!function_exists('ip2region')) {
      * // 输出: 中国广东省中山市【电信】
      *
      * echo ip2region('61.142.118.231', 'search');
-     * // 输出: 中国|广东省|中山市|电信
+     * // 输出: 中国|广东省|中山市|电信|CN
      *
      * $result = ip2region('61.142.118.231', 'memory');
-     * // 输出: Array([city_id] => 0, [region] => 中国|广东省|中山市|电信)
+     * // 输出: Array([city_id] => 0, [region] => 中国|广东省|中山市|电信|CN)
      *
      * // IPv6 查询示例
      * echo ip2region('2400:3200::1');

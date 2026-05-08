@@ -185,7 +185,7 @@ class Searcher
      * ```php
      * $searcher = Searcher::newWithFileOnly(4, '/path/to/ipv4.xdb');
      * $region = $searcher->search('61.142.118.231');
-     * echo $region; // 输出：中国|广东省|中山市|电信
+     * echo $region; // 输出：中国|广东省|中山市|电信|CN
      * ```
      */
     public function search(string $ip): string
@@ -213,7 +213,7 @@ class Searcher
      * $searcher = Searcher::newWithFileOnly(4, '/path/to/ipv4.xdb');
      * $ipBytes = Util::parseIP('61.142.118.231');
      * $region = $searcher->searchByBytes($ipBytes);
-     * echo $region; // 输出：中国|广东省|中山市|电信
+     * echo $region; // 输出：中国|广东省|中山市|电信|CN
      * ```
      */
     public function searchByBytes(string $ipBytes): string

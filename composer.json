@@ -56,7 +56,7 @@
     "download:v6": "php bin/ip2down download v6",
     "performance": "php tests/quick_performance_test.php",
     "stats": "php -r \"require 'vendor/autoload.php'; \\$searcher = new \\Ip2Region(); \\$stats = \\$searcher->getStats(); echo 'Memory Usage: ' . round(\\$stats['memory_usage'] / 1024 / 1024, 2) . ' MB' . PHP_EOL; echo 'Cache Policy: ' . \\$stats['cache_policy'] . PHP_EOL; echo 'IPv4 Loaded: ' . (\\$stats['v4_loaded'] ? 'Yes' : 'No') . PHP_EOL; echo 'IPv6 Loaded: ' . (\\$stats['v6_loaded'] ? 'Yes' : 'No') . PHP_EOL;\"",
-    "version": "php -r \"require 'vendor/autoload.php'; echo 'Ip2Region Version: 3.0.5' . PHP_EOL;\""
+    "version": "php -r \"require 'vendor/autoload.php'; echo 'Ip2Region Version: 3.0.14' . PHP_EOL;\""
   },
   "config": {
     "optimize-autoloader": true,

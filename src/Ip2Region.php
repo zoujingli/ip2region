@@ -250,9 +250,9 @@ class Ip2Region
 
         // 4. 抛出异常，提示用户下载数据库
         if ($version === 'v6') {
-            throw new \Exception("IPv6 查询需要下载完整数据库文件。\n\n下载方式：\n1. 使用 Composer 命令：composer download-db:v6\n2. 使用下载工具：./vendor/bin/ip2down download v6\n3. 手动下载（代理优先）：https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb\n   备用直链：https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb");
+            throw new \Exception("IPv6 查询需要下载完整数据库文件。\n\n下载方式：\n1. 使用 Composer 命令：composer download:v6\n2. 使用下载工具：./vendor/bin/ip2down download v6\n3. 手动下载（代理优先）：https://gh-proxy.org/https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb\n   备用直链：https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v6.xdb");
         } else {
-            throw new \Exception("未找到 IPv4 数据库文件。\n\n解决方案：\n1. 使用 Composer 命令：composer download-db:v4\n2. 使用下载工具：./vendor/bin/ip2down download v4\n3. 确保数据库文件 ip2region_v4.xdb 存在于 db/ 目录中");
+            throw new \Exception("未找到 IPv4 数据库文件。\n\n解决方案：\n1. 使用 Composer 命令：composer download:v4\n2. 使用下载工具：./vendor/bin/ip2down download v4\n3. 确保数据库文件 ip2region_v4.xdb 存在于 db/ 目录中");
         }
     }
 
@@ -329,10 +329,10 @@ class Ip2Region
      * ```php
      * $searcher = new Ip2Region();
      * $result = $searcher->memorySearch('61.142.118.231');
-     * echo $result['region']; // 输出：中国|广东省|中山市|电信
+     * echo $result['region']; // 输出：中国|广东省|中山市|电信|CN
      *
      * $result = $searcher->memorySearch('8.8.8.8');
-     * echo $result['region']; // 输出：美国|0|0|Level3
+     * echo $result['region']; // 输出：United States|California|0|Google LLC|US
      * ```
      */
     public function memorySearch(string $ip): array
@@ -431,7 +431,7 @@ class Ip2Region
      *
      * $info = $searcher->getIpInfo('8.8.8.8');
      * echo $info['country']; // 输出：美国
-     * echo $info['isp']; // 输出：Level3
+     * echo $info['isp']; // 输出：Google LLC
      * ```
      */
     public function getIpInfo(string $ip): ?array
@@ -597,15 +597,36 @@ class Ip2Region
      * $searcher = new Ip2Region();
      * echo $searcher->simple('61.142.118.231'); // 输出：中国广东省中山市【电信】
      * echo $searcher->simple('114.114.114.114'); // 输出：中国江苏省南京市
-     * echo $searcher->simple('8.8.8.8'); // 输出：美国【Level3】
+     * echo $searcher->simple('8.8.8.8'); // 输出：United StatesCalifornia【Google LLC】
      * ```
      */
     public function simple(string $ip): ?string
     {
         $geo = $this->memorySearch($ip);
-        $arr = explode('|', str_replace(array('0|'), '|', isset($geo['region']) ? $geo['region'] : ''));
-        if (($last = array_pop($arr)) === '内网IP') $last = '';
-        return join('', $arr) . (empty($last) ? '' : "【{$last}】");
+        $region = isset($geo['region']) ? $geo['region'] : '';
+        if ($region === '') {
+            return '';
+        }
+
+        // XDB 数据可能包含第 5 段国家/地区代码，例如：
+        // 中国|广东省|中山市|电信|CN
+        // simple() 保持旧版友好格式，仅展示国家/省/市和 ISP，不把国家代码误当 ISP。
+        $parts = explode('|', $region);
+        $location = array();
+        for ($i = 0; $i < 3; $i++) {
+            $part = isset($parts[$i]) ? $parts[$i] : '';
+            $lastLocation = empty($location) ? null : $location[count($location) - 1];
+            if ($part !== '' && $part !== '0' && $part !== $lastLocation) {
+                $location[] = $part;
+            }
+        }
+
+        $isp = isset($parts[3]) ? $parts[3] : '';
+        if ($isp === '0' || $isp === '内网IP') {
+            $isp = '';
+        }
+
+        return join('', $location) . ($isp === '' ? '' : "【{$isp}】");
     }
 
     /**
@@ -620,8 +641,8 @@ class Ip2Region
      * @example
      * ```php
      * $searcher = new Ip2Region();
-     * echo $searcher->search('61.142.118.231'); // 输出：中国|广东省|中山市|电信
-     * echo $searcher->search('114.114.114.114'); // 输出：中国|江苏省|南京市|0
+     * echo $searcher->search('61.142.118.231'); // 输出：中国|广东省|中山市|电信|CN
+     * echo $searcher->search('114.114.114.114'); // 输出：中国|江苏省|南京市|0|CN
      * echo $searcher->search('0.0.0.0'); // 输出：""（空字符串）
      * ```
      */
@@ -645,10 +666,10 @@ class Ip2Region
      * ```php
      * $searcher = new Ip2Region();
      * $result = $searcher->binarySearch('61.142.118.231');
-     * echo $result['region']; // 输出：中国|广东省|中山市|电信
+     * echo $result['region']; // 输出：中国|广东省|中山市|电信|CN
      *
      * $result = $searcher->binarySearch('8.8.8.8');
-     * echo $result['region']; // 输出：美国|0|0|Level3
+     * echo $result['region']; // 输出：United States|California|0|Google LLC|US
      * ```
      */
     public function binarySearch(string $ip): array
@@ -673,11 +694,11 @@ class Ip2Region
      * $searcher = new Ip2Region();
      * $ipv4Bytes = inet_pton('61.142.118.231'); // 4字节二进制
      * $result = $searcher->searchByBytes($ipv4Bytes);
-     * echo $result; // 输出：中国|广东省|中山市|电信
+     * echo $result; // 输出：中国|广东省|中山市|电信|CN
      *
      * $ipv4Bytes = inet_pton('8.8.8.8'); // 4字节二进制
      * $result = $searcher->searchByBytes($ipv4Bytes);
-     * echo $result; // 输出：美国|0|0|Level3
+     * echo $result; // 输出：United States|California|0|Google LLC|US
      * ```
      */
     public function searchByBytes(string $ipBytes): string
@@ -712,10 +733,10 @@ class Ip2Region
      * ```php
      * $searcher = new Ip2Region();
      * $result = $searcher->btreeSearch('61.142.118.231');
-     * echo $result['region']; // 输出：中国|广东省|中山市|电信
+     * echo $result['region']; // 输出：中国|广东省|中山市|电信|CN
      *
      * $result = $searcher->btreeSearch('8.8.8.8');
-     * echo $result['region']; // 输出：美国|0|0|Level3
+     * echo $result['region']; // 输出：United States|California|0|Google LLC|US
      * ```
      */
     public function btreeSearch(string $ip): array
