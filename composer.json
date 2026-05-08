@@ -48,7 +48,7 @@
   },
   "scripts": {
     "demo": "php tests/demo.php",
-    "test": "php tests/demo.php",
+    "test": "php tests/demo.php && php tests/special_addresses.php",
     "query": "php -r \"require 'vendor/autoload.php'; echo ip2region(\\$argv[1]) . PHP_EOL;\"",
     "query:batch": "php -r \"require 'vendor/autoload.php'; \\$searcher = new \\Ip2Region(); echo json_encode(\\$searcher->batchSearch(explode(',', \\$argv[1])), JSON_UNESCAPED_UNICODE) . PHP_EOL;\"",
     "download": "php bin/ip2down download all",
@@ -56,7 +56,8 @@
     "download:v6": "php bin/ip2down download v6",
     "performance": "php tests/quick_performance_test.php",
     "stats": "php -r \"require 'vendor/autoload.php'; \\$searcher = new \\Ip2Region(); \\$stats = \\$searcher->getStats(); echo 'Memory Usage: ' . round(\\$stats['memory_usage'] / 1024 / 1024, 2) . ' MB' . PHP_EOL; echo 'Cache Policy: ' . \\$stats['cache_policy'] . PHP_EOL; echo 'IPv4 Loaded: ' . (\\$stats['v4_loaded'] ? 'Yes' : 'No') . PHP_EOL; echo 'IPv6 Loaded: ' . (\\$stats['v6_loaded'] ? 'Yes' : 'No') . PHP_EOL;\"",
-    "version": "php -r \"require 'vendor/autoload.php'; echo 'Ip2Region Version: 3.0.14' . PHP_EOL;\""
+    "version": "php -r \"require 'vendor/autoload.php'; echo 'Ip2Region Version: 3.0.14' . PHP_EOL;\"",
+    "test:special": "php tests/special_addresses.php"
   },
   "config": {
     "optimize-autoloader": true,
