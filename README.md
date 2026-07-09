@@ -1255,4 +1255,4 @@ if ($result === null) {
 
 ## 赞助支持
 
-> 📢 **推荐服务**：[VSLLM](https://vsllm.com)
+-   **推荐服务**：[VSLLM](https://vsllm.com)
