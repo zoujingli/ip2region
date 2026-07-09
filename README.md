@@ -429,5 +429,4 @@ composer test
 
 ## 💖 赞助支持
 
-- [VSLLM](https://vsllm.com/register?aff=gSul)：AI 开发与模型服务支持
 - [PhpStorm](https://www.jetbrains.com/phpstorm/)：JetBrains 专业 PHP IDE
