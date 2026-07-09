@@ -48,7 +48,7 @@
   },
   "scripts": {
     "demo": "php tests/demo.php",
-    "test": "php tests/demo.php && php tests/special_addresses.php",
+    "test": "php tests/demo.php && php tests/special_addresses.php && php tests/xdb_validation.php",
     "query": "php -r \"require 'vendor/autoload.php'; echo ip2region(\\$argv[1]) . PHP_EOL;\"",
     "query:batch": "php -r \"require 'vendor/autoload.php'; \\$searcher = new \\Ip2Region(); echo json_encode(\\$searcher->batchSearch(explode(',', \\$argv[1])), JSON_UNESCAPED_UNICODE) . PHP_EOL;\"",
     "download": "php bin/ip2down download all",

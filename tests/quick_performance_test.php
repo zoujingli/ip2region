@@ -92,6 +92,37 @@ function testPerformance($name, $callback, $methodInfo = '')
     return $time;
 }
 
+function repeatSamples(array $samples, $targetCount)
+{
+    $result = array();
+    $sampleCount = count($samples);
+    for ($i = 0; $i < $targetCount; $i++) {
+        $result[] = $samples[$i % $sampleCount];
+    }
+    return $result;
+}
+
+$ipv4Samples = array(
+    '113.117.234.114',
+    '61.142.118.231',
+    '202.96.134.133',
+    '180.76.76.76',
+    '114.114.114.114',
+    '223.5.5.5',
+);
+
+$ipv6Samples = array();
+if (!empty($dbInfo['v6_path'])) {
+    $ipv6Samples = array(
+        '2400:3200::1',
+        '2606:4700:4700::1111',
+        '2400:da00::6666',
+    );
+}
+
+$performanceIpPool = array_merge($ipv4Samples, $ipv6Samples);
+$batchSampleIps = repeatSamples($performanceIpPool, 10);
+
 // 1. 首次加载测试
 echo "1. 首次加载测试:\n";
 $firstLoadV4 = testPerformance("  IPv4首次加载", function () {
@@ -102,7 +133,7 @@ $firstLoadV4 = testPerformance("  IPv4首次加载", function () {
 $firstLoadV6 = testPerformance("  IPv6首次加载", function () {
     try {
         $ip2region = new \Ip2Region();
-        return $ip2region->simple('2001:4860:4860::8888');
+        return $ip2region->simple('2400:3200::1');
     } catch (Exception $e) {
         return "IPv6数据库未下载: " . $e->getMessage();
     }
@@ -141,35 +172,17 @@ $memoryTime = testPerformance("  memorySearch方法", function () use ($ip2regio
 
 // 4. 批量查询测试
 echo "\n4. 批量查询测试:\n";
-$batchTime = testPerformance("  批量查询(10个IP)", function () use ($ip2region) {
+$batchTime = testPerformance("  批量查询(10个IP)", function () use ($ip2region, $batchSampleIps) {
     try {
-        $ips = ['61.142.118.231', '8.8.8.8', '114.114.114.114', '1.1.1.1', '223.5.5.5',
-            '2001:4860:4860::8888', '2400:3200::1', '2606:4700:4700::1111', '180.76.76.76', '202.96.134.133'];
-        return $ip2region->batchSearch($ips);
+        return $ip2region->batchSearch($batchSampleIps);
     } catch (Exception $e) {
         return "批量查询包含IPv6地址，需要下载IPv6数据库: " . $e->getMessage();
     }
 }, "ip2region->batchSearch(10个IP)");
 
-// 生成10000个测试IP
-echo "  生成10000个测试IP...\n";
-$testIps = [];
-$baseIps = [
-    '61.142.118.', '8.8.8.', '114.114.114.', '1.1.1.', '223.5.5.',
-    '202.96.134.', '180.76.76.', '114.114.115.', '8.8.4.', '1.0.0.',
-    '2001:4860:4860::', '2400:3200::', '2606:4700:4700::', '2400:da00::', '2001:db8::'
-];
-
-for ($i = 0; $i < 10000; $i++) {
-    $baseIp = $baseIps[$i % count($baseIps)];
-    if (strpos($baseIp, ':') !== false) {
-        // IPv6
-        $testIps[] = $baseIp . dechex($i % 65536);
-    } else {
-        // IPv4
-        $testIps[] = $baseIp . ($i % 255);
-    }
-}
+// 重复当前 XDB 已验证的真实样本池，避免拼接构造不存在的测试地址。
+echo "  真实样本池: " . count($performanceIpPool) . " 个IP，重复生成10000次查询...\n";
+$testIps = repeatSamples($performanceIpPool, 10000);
 
 $batch10000Time = testPerformance("  批量查询(10000个IP)", function () use ($ip2region, $testIps) {
     return $ip2region->batchSearch($testIps);
