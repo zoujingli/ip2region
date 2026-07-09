@@ -26,7 +26,7 @@
  * 数据库优先级：
  * 1. 自定义数据库路径（通过构造函数指定）
  * 2. 下载的数据库文件（vendor/bin/ip2data/ 目录）
- * 3. 内置数据库文件（db/ 目录，IPv4 和 IPv6）
+ * 3. 内置数据库文件（db/ 目录，默认包含 IPv4，IPv6 可按需提供）
  *
  * @author Anyon <zoujingli@qq.com>
  * @version 3.0
@@ -257,6 +257,49 @@ class Ip2Region
     }
 
     /**
+     * 校验 XDB 数据库文件结构和 IP 版本
+     *
+     * @param string $file XDB 数据库文件路径
+     * @param int $expectedVersion 期望 IP 版本，4 或 6
+     * @throws \Exception 当文件不可读、结构无效或版本不匹配时抛出异常
+     */
+    private function validateDbFile(string $file, int $expectedVersion): void
+    {
+        if (!file_exists($file)) {
+            throw new \Exception("数据库文件不存在: {$file}");
+        }
+
+        if (!is_readable($file)) {
+            throw new \Exception("数据库文件不可读: {$file}");
+        }
+
+        $error = \ip2region\xdb\Util::verifyFromFile($file);
+        if ($error !== null) {
+            throw new \UnexpectedValueException("XDB 数据库校验失败: {$file} ({$error})");
+        }
+
+        $header = \ip2region\xdb\Util::loadHeaderFromFile($file);
+        if ($header === null) {
+            throw new \UnexpectedValueException("XDB 数据库校验失败: {$file} (无法读取 XDB 文件头)");
+        }
+
+        try {
+            $actualVersion = \ip2region\xdb\Util::versionFromHeader($header);
+        } catch (\Exception $e) {
+            throw new \UnexpectedValueException("XDB 数据库校验失败: {$file} ({$e->getMessage()})");
+        }
+
+        if ($actualVersion->id !== $expectedVersion) {
+            throw new \UnexpectedValueException(sprintf(
+                '数据库版本不匹配: %s 期望 IPv%d，实际 %s',
+                $file,
+                $expectedVersion,
+                $actualVersion->name
+            ));
+        }
+    }
+
+    /**
      * 创建搜索引擎实例
      *
      * 根据指定版本创建对应的搜索引擎实例，支持IPv4和IPv6
@@ -288,15 +331,23 @@ class Ip2Region
                 throw new \Exception("数据库文件不存在: {$file}");
             }
 
+            $this->validateDbFile($file, $ipVersion);
+
             // 根据缓存策略创建搜索引擎
             switch ($this->cachePolicy) {
                 case 'vectorIndex':
                     // 向量索引模式需要先读取向量索引
-                    $vectorIndex = file_get_contents($file, false, null, 0, 8192);
+                    $vectorIndex = \ip2region\xdb\Util::loadVectorIndexFromFile($file);
+                    if ($vectorIndex === null) {
+                        throw new \Exception("无法读取 XDB 向量索引: {$file}");
+                    }
                     return \ip2region\xdb\Searcher::newWithVectorIndex($ipVersion, $file, $vectorIndex);
                 case 'content':
                     // 内容缓存模式需要先读取整个文件
-                    $content = file_get_contents($file);
+                    $content = \ip2region\xdb\Util::loadContentFromFile($file);
+                    if ($content === null) {
+                        throw new \Exception("无法读取 XDB 数据库内容: {$file}");
+                    }
                     return \ip2region\xdb\Searcher::newWithBuffer($ipVersion, $content);
                 case 'file':
                 default:
@@ -390,7 +441,7 @@ class Ip2Region
      * ```php
      * $searcher = new Ip2Region();
      * $result = $searcher->searchIPv6('2400:3200::1');
-     * echo $result; // 输出：中国|浙江省|杭州市|专线用户
+     * echo $result; // 输出：中国|浙江省|杭州市|阿里|CN
      * ```
      */
     public function searchIPv6(string $ip): string
@@ -442,7 +493,7 @@ class Ip2Region
         }
 
         $parts = explode('|', $result['region']);
-        // 数据格式：国家|省份|城市|ISP (4个字段)
+        // 数据格式：国家|省份|城市|ISP|国家代码（当前只映射前 4 个地理/运营商字段）
         return array(
             'country'  => isset($parts[0]) ? $parts[0] : '',
             'province' => isset($parts[1]) ? $parts[1] : '', // 省份
@@ -738,7 +789,7 @@ class Ip2Region
      * 自动处理空值和内网IP，提供更友好的显示格式
      *
      * @param string $ip 要查询的IP地址（支持IPv4和IPv6）
-     * @return string|null 返回格式化的地理位置字符串，查询失败返回 null
+     * @return string|null 返回格式化的地理位置字符串，未找到返回空字符串，查询失败时抛出异常
      *
      * @example
      * ```php
@@ -858,8 +909,13 @@ class Ip2Region
      */
     public function searchByBytes(string $ipBytes): string
     {
+        $length = strlen($ipBytes);
+        if ($length !== 4 && $length !== 16) {
+            throw new \Exception("无效的 IP 字节长度: {$length}");
+        }
+
         // 确定IP版本
-        $version = strlen($ipBytes) == 4 ? 'v4' : 'v6';
+        $version = $length == 4 ? 'v4' : 'v6';
 
         if ($version === 'v4') {
             if ($this->searcherV4 === null) {

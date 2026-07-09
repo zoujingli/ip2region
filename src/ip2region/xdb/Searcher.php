@@ -60,9 +60,9 @@ class Searcher
      *
      * 创建一个基于XDB文件的搜索引擎实例
      * 使用文件句柄进行数据读取，适合大文件处理
-     * 内部会将 int 版本参数转换为对应的版本对象
+     * 兼容 int 版本号和 IPv4/IPv6 版本对象
      *
-     * @param int $version IP版本（4或6）
+     * @param int|string|IPv4|IPv6 $version IP版本（4或6）或版本对象
      * @param string $dbFile XDB数据库文件路径
      * @return Searcher 返回搜索引擎实例
      * @throws \Exception 当文件不存在或无法打开时抛出异常
@@ -73,10 +73,9 @@ class Searcher
      * $result = $searcher->search('61.142.118.231');
      * ```
      */
-    public static function newWithFileOnly(int $version, string $dbFile): self
+    public static function newWithFileOnly($version, string $dbFile): self
     {
-        $self = $version === 4 ? IPv4::default() : IPv6::default();
-        return new self($self, $dbFile, null, null);
+        return new self(self::normalizeVersion($version), $dbFile, null, null);
     }
 
     /**
@@ -84,9 +83,9 @@ class Searcher
      *
      * 创建一个基于XDB文件和向量索引的搜索引擎实例
      * 使用预加载的向量索引提高搜索性能
-     * 内部会将 int 版本参数转换为对应的版本对象
+     * 兼容 int 版本号和 IPv4/IPv6 版本对象
      *
-     * @param int $version IP版本（4或6）
+     * @param int|string|IPv4|IPv6 $version IP版本（4或6）或版本对象
      * @param string $dbFile XDB数据库文件路径
      * @param string $vIndex 向量索引数据
      * @return Searcher 返回搜索引擎实例
@@ -98,10 +97,9 @@ class Searcher
      * $result = $searcher->search('61.142.118.231');
      * ```
      */
-    public static function newWithVectorIndex(int $version, string $dbFile, string $vIndex): self
+    public static function newWithVectorIndex($version, string $dbFile, string $vIndex): self
     {
-        $versionObj = $version === 4 ? IPv4::default() : IPv6::default();
-        return new self($versionObj, $dbFile, $vIndex, null);
+        return new self(self::normalizeVersion($version), $dbFile, $vIndex, null);
     }
 
     /**
@@ -109,9 +107,9 @@ class Searcher
      *
      * 创建一个基于内存缓冲区的搜索引擎实例
      * 使用预加载的内容缓冲区，适合小文件或内存充足的环境
-     * 内部会将 int 版本参数转换为对应的版本对象
+     * 兼容 int 版本号和 IPv4/IPv6 版本对象
      *
-     * @param int $version IP版本（4或6）
+     * @param int|string|IPv4|IPv6 $version IP版本（4或6）或版本对象
      * @param string $cBuff 内容缓冲区数据
      * @return Searcher 返回搜索引擎实例
      *
@@ -122,10 +120,38 @@ class Searcher
      * $result = $searcher->search('61.142.118.231');
      * ```
      */
-    public static function newWithBuffer(int $version, string $cBuff): self
+    public static function newWithBuffer($version, string $cBuff): self
     {
-        $versionObj = $version === 4 ? IPv4::default() : IPv6::default();
-        return new self($versionObj, null, null, $cBuff);
+        return new self(self::normalizeVersion($version), null, null, $cBuff);
+    }
+
+    /**
+     * 归一化 IP 版本参数
+     *
+     * @param int|string|IPv4|IPv6 $version IP版本（4或6）或版本对象
+     * @return IPv4|IPv6
+     * @throws \InvalidArgumentException 当版本参数无效时抛出异常
+     */
+    private static function normalizeVersion($version)
+    {
+        if ($version instanceof IPv4 || $version instanceof IPv6) {
+            return $version;
+        }
+
+        if (is_string($version) && ctype_digit($version)) {
+            $version = (int)$version;
+        }
+
+        if ($version === Util::IPv4VersionNo) {
+            return IPv4::default();
+        }
+
+        if ($version === Util::IPv6VersionNo) {
+            return IPv6::default();
+        }
+
+        $value = is_object($version) ? get_class($version) : var_export($version, true);
+        throw new \InvalidArgumentException("无效的 IP 版本: {$value}");
     }
 
     // ============================================================================
