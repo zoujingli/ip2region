@@ -23,7 +23,7 @@ if (!function_exists('ip2region')) {
      * - 支持多种查询方法和返回格式
      * - 内置 IP 地址格式验证
      * - 懒加载机制，按需初始化查询器
-     * - 异常安全，提供详细的错误信息
+     * - 非法 IP 会立即抛出异常，便于调用方明确处理错误
      *
      * **支持的查询方法：**
      * - `simple` (默认): 返回格式化的地理位置字符串，如 "中国广东省中山市【电信】"
@@ -34,8 +34,8 @@ if (!function_exists('ip2region')) {
      *
      * @param string $ip IP 地址，支持 IPv4 和 IPv6 格式
      * @param string $method 查询方法，可选值：simple, search, memory, binary, btree
-     * @return string|array|null 查询结果，失败时返回 null
-     * @throws Exception 当 IP 地址格式无效时抛出异常
+     * @return string|array 查询结果
+     * @throws Exception 当 IP 地址格式无效、数据库缺失或查询失败时抛出异常
      *
      * @example
      * // IPv4 查询示例
@@ -50,7 +50,7 @@ if (!function_exists('ip2region')) {
      *
      * // IPv6 查询示例
      * echo ip2region('2400:3200::1');
-     * // 输出: 中国浙江省杭州市【专线用户】
+     * // 输出: 中国浙江省杭州市【阿里】
      *
      * // 异常处理示例
      * try {
