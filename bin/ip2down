@@ -86,6 +86,7 @@ class DatabaseManager
                         ),
                         'file'    => 'ip2region_v4.xdb',
                         'desc'    => 'IPv4 数据库',
+                        'versionNo' => 4,
                         'minSize' => 10 * 1024 * 1024
                 ),
                 'v6' => array(
@@ -96,6 +97,7 @@ class DatabaseManager
                         ),
                         'file'    => 'ip2region_v6.xdb',
                         'desc'    => 'IPv6 数据库',
+                        'versionNo' => 6,
                         // 官方文件当前约 36.09MB（36086712 bytes），这里设置较低下限避免下载到 HTML/错误页
                         'minSize' => 30 * 1024 * 1024
                 )
@@ -109,6 +111,10 @@ class DatabaseManager
 
     public function download($version, $callback = null)
     {
+        if ($version !== 'all' && !isset($this->config[$version])) {
+            throw new Exception("无效的数据库版本: {$version}，可选值: v4, v6, all");
+        }
+
         $versions = $version === 'all' ? array('v4', 'v6') : array($version);
         $results = array();
 
@@ -133,6 +139,7 @@ class DatabaseManager
 
     private function downloadFile($config, $filePath, $minSize, $callback, $version)
     {
+        $tempPath = $filePath . '.tmp.' . getmypid();
         $context = stream_context_create(array(
                 'http' => array('timeout' => 300)
         ));
@@ -153,10 +160,10 @@ class DatabaseManager
         }
         if (!$input) throw new Exception("无法打开下载链接: {$lastError}");
 
-        $output = fopen($filePath, 'wb');
+        $output = fopen($tempPath, 'wb');
         if (!$output) {
             fclose($input);
-            throw new Exception("无法创建文件: $filePath");
+            throw new Exception("无法创建临时文件: $tempPath");
         }
 
         $bytesCopied = 0;
@@ -185,11 +192,29 @@ class DatabaseManager
         fclose($input);
         fclose($output);
         if ($bytesCopied < $minSize) {
-            unlink($filePath);
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
             throw new Exception("下载文件过小，可能不完整");
         }
 
-        return array('success' => true, 'size' => $bytesCopied, 'filepath' => $filePath);
+        try {
+            $xdbInfo = $this->inspectXdbFile($tempPath, $config['versionNo']);
+        } catch (Exception $e) {
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
+            throw $e;
+        }
+
+        if (!rename($tempPath, $filePath)) {
+            if (file_exists($tempPath)) {
+                unlink($tempPath);
+            }
+            throw new Exception("无法保存数据库文件: {$filePath}");
+        }
+
+        return array('success' => true, 'size' => $bytesCopied, 'filepath' => $filePath, 'xdb' => $xdbInfo);
     }
 
     private function showDownloadProgress($callback, $bytesCopied, $startTime, $version)
@@ -209,12 +234,31 @@ class DatabaseManager
         foreach ($this->config as $ver => $config) {
             $filePath = $this->dbDir . '/' . $config['file'];
             if (file_exists($filePath)) {
-                $files[] = array(
+                $file = array(
                         'filename' => $config['file'],
                         'type'     => $ver === 'v4' ? 'IPv4' : 'IPv6',
                         'size'     => filesize($filePath),
-                        'modified' => filemtime($filePath)
+                        'modified' => filemtime($filePath),
+                        'xdb_valid' => false,
+                        'xdb_error' => null,
+                        'xdb_created_at' => null,
+                        'xdb_structure_version' => null,
+                        'xdb_ip_version' => null,
+                        'xdb_runtime_ptr_bytes' => null
                 );
+
+                try {
+                    $xdbInfo = $this->inspectXdbFile($filePath, $config['versionNo']);
+                    $file['xdb_valid'] = true;
+                    $file['xdb_created_at'] = $xdbInfo['createdAt'];
+                    $file['xdb_structure_version'] = $xdbInfo['structureVersion'];
+                    $file['xdb_ip_version'] = $xdbInfo['ipVersionName'];
+                    $file['xdb_runtime_ptr_bytes'] = $xdbInfo['runtimePtrBytes'];
+                } catch (Exception $e) {
+                    $file['xdb_error'] = $e->getMessage();
+                }
+
+                $files[] = $file;
             }
         }
         return $files;
@@ -249,6 +293,49 @@ class DatabaseManager
             $bytes /= 1024;
         }
         return round($bytes, $precision) . ' ' . $units[$i];
+    }
+
+    private function inspectXdbFile($filePath, $expectedVersionNo = null)
+    {
+        if (!file_exists($filePath)) {
+            throw new Exception("数据库文件不存在: {$filePath}");
+        }
+
+        if (!is_readable($filePath)) {
+            throw new Exception("数据库文件不可读: {$filePath}");
+        }
+
+        $error = \ip2region\xdb\Util::verifyFromFile($filePath);
+        if ($error !== null) {
+            throw new Exception("XDB 数据库校验失败: {$error}");
+        }
+
+        $header = \ip2region\xdb\Util::loadHeaderFromFile($filePath);
+        if ($header === null) {
+            throw new Exception("XDB 数据库校验失败: 无法读取 XDB 文件头");
+        }
+
+        try {
+            $version = \ip2region\xdb\Util::versionFromHeader($header);
+        } catch (Exception $e) {
+            throw new Exception("XDB 数据库校验失败: " . $e->getMessage());
+        }
+
+        if ($expectedVersionNo !== null && $version->id !== $expectedVersionNo) {
+            throw new Exception(sprintf(
+                    '数据库版本不匹配: 期望 IPv%d，实际 %s',
+                    $expectedVersionNo,
+                    $version->name
+            ));
+        }
+
+        return array(
+                'createdAt' => $header['createdAt'],
+                'structureVersion' => $header['version'],
+                'ipVersionNo' => $version->id,
+                'ipVersionName' => $version->name,
+                'runtimePtrBytes' => $header['runtimePtrBytes']
+        );
     }
 }
 
@@ -330,7 +417,15 @@ class DatabaseDownloader
         echo "\n\n下载完成！\n";
         foreach ($results as $ver => $result) {
             if ($result['success']) {
-                echo "✅ {$ver}: " . $this->formatBytes($result['size']) . "\n";
+                echo "✅ {$ver}: " . $this->formatBytes($result['size']);
+                if (!empty($result['xdb'])) {
+                    echo "，" . $result['xdb']['ipVersionName'];
+                    echo "，XDB v" . $result['xdb']['structureVersion'];
+                    echo "，创建时间: " . date('Y-m-d H:i:s', $result['xdb']['createdAt']);
+                }
+                echo "\n";
+            } else {
+                echo "❌ {$ver}: " . $result['error'] . "\n";
             }
         }
     }
@@ -360,6 +455,13 @@ class DatabaseDownloader
             echo "   类型: {$file['type']}\n";
             echo "   大小: " . $this->formatBytes($file['size']) . "\n";
             echo "   修改时间: " . date('Y-m-d H:i:s', $file['modified']) . "\n\n";
+            if ($file['xdb_valid']) {
+                echo "   XDB: {$file['xdb_ip_version']} / v{$file['xdb_structure_version']}";
+                echo " / created " . date('Y-m-d H:i:s', $file['xdb_created_at']);
+                echo " / ptr {$file['xdb_runtime_ptr_bytes']} bytes\n\n";
+            } else {
+                echo "   校验: 失败 - {$file['xdb_error']}\n\n";
+            }
         }
     }
 
@@ -378,9 +480,14 @@ class DatabaseDownloader
 
         try {
             $searcher = new \Ip2Region();
-            $this->testIPv4($searcher);
-            $this->testIPv6($searcher);
-            echo "\n✅ 数据库功能测试通过\n";
+            $ipv4Ok = $this->testIPv4($searcher);
+            $ipv6Ok = $this->testIPv6($searcher);
+            if ($ipv4Ok && $ipv6Ok) {
+                echo "\n✅ IPv4/IPv6 数据库功能测试通过\n";
+            } else {
+                echo "\n✅ IPv4 数据库功能测试通过\n";
+                echo "⚠️  普通 IPv6 查询需要先运行: ip2down download v6\n";
+            }
         } catch (Exception $e) {
             $this->showTestError($e);
         }
@@ -391,7 +498,12 @@ class DatabaseDownloader
         echo "测试 IPv4 查询:\n";
         try {
             $result = $searcher->simple('61.142.118.231');
+            $expected = '中国广东省中山市【电信】';
+            if ($result !== $expected) {
+                throw new Exception("IPv4 真实样本输出不匹配，期望 {$expected}，实际 {$result}");
+            }
             echo "  61.142.118.231 -> $result\n";
+            return true;
         } catch (Exception $e) {
             echo "  ❌ IPv4 查询失败: " . $e->getMessage() . "\n";
             throw $e;
@@ -403,8 +515,18 @@ class DatabaseDownloader
         echo "测试 IPv6 查询:\n";
         try {
             $result = $searcher->simple('2400:3200::1');
+            $expected = '中国浙江省杭州市【阿里】';
+            if ($result !== $expected) {
+                throw new Exception("IPv6 真实样本输出不匹配，期望 {$expected}，实际 {$result}");
+            }
             echo "  2400:3200::1 -> $result\n";
+            return true;
         } catch (Exception $e) {
+            if (strpos($e->getMessage(), 'IPv6 查询需要下载') !== false) {
+                echo "  ⚠️ IPv6 数据库未准备: " . $e->getMessage() . "\n";
+                return false;
+            }
+
             echo "  ❌ IPv6 查询失败: " . $e->getMessage() . "\n";
             throw $e;
         }
@@ -413,7 +535,7 @@ class DatabaseDownloader
     private function showTestError($e)
     {
         echo "❌ 测试失败: " . $e->getMessage() . "\n";
-        echo "请确保已下载数据库文件: ip2down download all\n";
+        echo "请确保数据库文件完整且版本正确，可运行: ip2down download all\n";
     }
 }
 
