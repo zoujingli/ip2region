@@ -63,6 +63,17 @@ composer install
 
 IPv4 数据库已随包发布。IPv6 数据库默认不内置，需要下载到 `vendor/bin/ip2data/`、手动放入 `db/`，或通过构造函数提供绝对路径。
 
+### 当前数据基线
+
+内置 IPv4 和本次验证使用的 IPv6 均来自官方仓库，采用 XDB v3 格式。生成时间为北京时间：
+
+| 数据库 | 生成时间 | 官方提交 | 文件大小 |
+|--------|----------|----------|----------|
+| IPv4（内置） | 2026-08-28 12:43:01 | [7e4c5b6](https://github.com/lionsoul2014/ip2region/commit/7e4c5b6761451c734db51e2b0652219ffc1aba36) | 11,122,036 字节 |
+| IPv6（按需下载） | 2026-08-14 13:38:41 | [85a4f87](https://github.com/lionsoul2014/ip2region/commit/85a4f87cb9d6f59f153b316d953f0ae43867adfc) | 37,277,813 字节 |
+
+下载工具仍获取官方 `master` 分支的最新数据。下载目录的优先级高于包内默认目录；升级包后如已有旧的下载文件，请运行 `composer download` 同步更新 IPv4 和 IPv6，或运行 `composer download:v4` 只更新 IPv4。
+
 ### 📥 下载 IPv6 数据库
 
 推荐使用内置工具：
