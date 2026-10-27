@@ -11,7 +11,6 @@
  *
  * @package ip2region\xdb
  * @author The Ip2Region Authors
- * @version 3.0
  */
 
 // Copyright 2022 The Ip2Region Authors. All rights reserved.
@@ -164,9 +163,9 @@ class Util
     // ============================================================================
 
     /**
-     * 将字节数组转换为长整型值（大端序）
+     * 将字节数组转换为长整型值（小端序）
      *
-     * 从指定偏移量开始读取4个字节，按大端序转换为32位长整型
+     * 从指定偏移量开始读取4个字节，按小端序组合整数
      *
      * @param string $bytes 字节数组
      * @param int $offset 起始偏移量
@@ -174,7 +173,7 @@ class Util
      *
      * @example
      * ```php
-     * $bytes = "\x00\x00\x00\x01"; // 大端序的1
+     * $bytes = "\x01\x00\x00\x00"; // 小端序的1
      * $value = Util::getLong($bytes, 0); // 返回：1
      * ```
      */
@@ -184,28 +183,6 @@ class Util
         $val |= ((ord($bytes[$offset + 1]) << 8) & 0xFF00);
         $val |= ((ord($bytes[$offset + 2]) << 16) & 0xFF0000);
         $val |= ((ord($bytes[$offset + 3]) << 24) & 0xFF000000);
-        return $val;
-    }
-
-    /**
-     * 将字节数组转换为整型值（大端序）
-     *
-     * 从指定偏移量开始读取2个字节，按大端序转换为16位整型
-     *
-     * @param string $bytes 字节数组
-     * @param int $offset 起始偏移量
-     * @return int 返回转换后的整型值
-     *
-     * @example
-     * ```php
-     * $bytes = "\x00\x01"; // 大端序的1
-     * $value = Util::getInt($bytes, 0); // 返回：1
-     * ```
-     */
-    public static function getInt($bytes, $offset)
-    {
-        $val = (ord($bytes[$offset]) & 0xFF);
-        $val |= ((ord($bytes[$offset + 1]) << 8) & 0xFF00);
         return $val;
     }
 
@@ -221,6 +198,28 @@ class Util
      * @example
      * ```php
      * $bytes = "\x01\x00"; // 小端序的1
+     * $value = Util::getInt($bytes, 0); // 返回：1
+     * ```
+     */
+    public static function getInt($bytes, $offset)
+    {
+        $val = (ord($bytes[$offset]) & 0xFF);
+        $val |= ((ord($bytes[$offset + 1]) << 8) & 0xFF00);
+        return $val;
+    }
+
+    /**
+     * 兼容旧接口：按大端序读取16位整数
+     *
+     * 方法名保留历史 LE 后缀，实际字节序为大端序。
+     *
+     * @param string $bytes 字节数组
+     * @param int $offset 起始偏移量
+     * @return int 返回转换后的整型值
+     *
+     * @example
+     * ```php
+     * $bytes = "\x00\x01"; // 大端序的1
      * $value = Util::getIntLE($bytes, 0); // 返回：1
      * ```
      */
@@ -232,9 +231,9 @@ class Util
     }
 
     /**
-     * 将字节数组转换为长整型值（小端序）
+     * 兼容旧接口：按大端序读取32位整数
      *
-     * 从指定偏移量开始读取4个字节，按小端序转换为32位长整型
+     * 方法名保留历史 LE 后缀，实际字节序为大端序。
      *
      * @param string $bytes 字节数组
      * @param int $offset 起始偏移量
@@ -242,7 +241,7 @@ class Util
      *
      * @example
      * ```php
-     * $bytes = "\x01\x00\x00\x00"; // 小端序的1
+     * $bytes = "\x00\x00\x00\x01"; // 大端序的1
      * $value = Util::getLongLE($bytes, 0); // 返回：1
      * ```
      */
@@ -256,10 +255,9 @@ class Util
     }
 
     /**
-     * 将字节数组转换为整型值（大端序）
+     * 兼容旧接口：按小端序读取16位整数
      *
-     * 从指定偏移量开始读取2个字节，按大端序转换为16位整型
-     * 与 getInt 方法功能相同，提供更明确的命名
+     * 与 getInt 相同，历史 BE 后缀不代表实际字节序。
      *
      * @param string $bytes 字节数组
      * @param int $offset 起始偏移量
@@ -267,7 +265,7 @@ class Util
      *
      * @example
      * ```php
-     * $bytes = "\x00\x01"; // 大端序的1
+     * $bytes = "\x01\x00"; // 小端序的1
      * $value = Util::getIntBE($bytes, 0); // 返回：1
      * ```
      */
@@ -279,10 +277,9 @@ class Util
     }
 
     /**
-     * 将字节数组转换为长整型值（大端序）
+     * 兼容旧接口：按小端序读取32位整数
      *
-     * 从指定偏移量开始读取4个字节，按大端序转换为32位长整型
-     * 与 getLong 方法功能相同，提供更明确的命名
+     * 与 getLong 相同，历史 BE 后缀不代表实际字节序。
      *
      * @param string $bytes 字节数组
      * @param int $offset 起始偏移量
@@ -290,7 +287,7 @@ class Util
      *
      * @example
      * ```php
-     * $bytes = "\x00\x00\x00\x01"; // 大端序的1
+     * $bytes = "\x01\x00\x00\x00"; // 小端序的1
      * $value = Util::getLongBE($bytes, 0); // 返回：1
      * ```
      */

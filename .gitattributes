@@ -15,5 +15,5 @@
 # 忽略 vendor 目录的换行符检查
 /vendor/ -text
 
-# 确保脚本文件可执行
+# CLI 脚本使用 LF 换行符；可执行位由 Git 文件模式保存
 bin/ip2down text eol=lf

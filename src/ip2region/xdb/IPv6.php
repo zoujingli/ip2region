@@ -11,7 +11,6 @@
  *
  * @package ip2region\xdb
  * @author The Ip2Region Authors
- * @version 3.0
  */
 
 // Copyright 2022 The Ip2Region Authors. All rights reserved.
@@ -143,10 +142,9 @@ class IPv6
     /**
      * 解析IP地址字符串
      *
-     * 将IPv6地址字符串转换为二进制字节格式
-     * 这是Util::parseIP的便捷方法
+     * 委托 Util::parseIP，接受 IPv4 或 IPv6；需要限制版本时先调用 isValid
      *
-     * @param string $ipString 要解析的IPv6地址字符串
+     * @param string $ipString 要解析的IP地址字符串
      * @return string|null 返回二进制字节格式的IP地址，解析失败返回 null
      *
      * @example
@@ -163,15 +161,15 @@ class IPv6
     /**
      * 将IP地址字符串转换为长整型值
      *
-     * 将IPv6地址字符串转换为128位长整型值
-     * 使用大端序字节序进行转换
+     * 兼容旧接口：仅取地址前4字节并按小端序组合整数
+     * 不能表示完整IPv6；完整转换请使用 parse 和 Util::ipToString
      *
      * @param string $ipString 要转换的IPv6地址字符串
-     * @return int|null 返回转换后的长整型值，转换失败返回 null
+     * @return int|null 返回前4字节的整型值，解析失败返回 null
      *
      * @example
      * ```php
-     * $long = IPv6::toLong('2400:3200::1'); // 返回长整型值
+     * $long = IPv6::toLong('2400:3200::1'); // 仅包含前4字节，不含末尾的1
      * $invalid = IPv6::toLong('invalid-ip'); // 返回 null
      * ```
      */
@@ -187,19 +185,16 @@ class IPv6
     /**
      * 将长整型值转换为IP地址字符串
      *
-     * 将128位长整型值转换为IPv6地址字符串
-     * 使用大端序字节序进行转换
+     * 兼容旧接口：把PHP原生整数展开为16字节地址
+     * 受原生整数位宽限制，不能还原任意IPv6，也不与 toLong 互为逆操作
      *
      * @param int $long 要转换的长整型值
      * @return string|false 返回转换后的IPv6地址字符串，转换失败返回 false
      *
      * @example
      * ```php
-     * $ip = IPv6::toStr($longValue); // 返回IPv6地址字符串
+     * $ip = IPv6::toStr(1); // 返回："::1"
      * ```
-     */
-    /**
-     * @return string|false
      */
     public static function toStr(int $long)
     {

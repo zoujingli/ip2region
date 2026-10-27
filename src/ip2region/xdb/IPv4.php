@@ -11,7 +11,6 @@
  *
  * @package ip2region\xdb
  * @author The Ip2Region Authors
- * @version 3.0
  */
 
 // Copyright 2022 The Ip2Region Authors. All rights reserved.
@@ -156,10 +155,9 @@ class IPv4
     /**
      * 解析IP地址字符串
      *
-     * 将IPv4地址字符串转换为二进制字节格式
-     * 这是Util::parseIP的便捷方法
+     * 委托 Util::parseIP，接受 IPv4 或 IPv6；需要限制版本时先调用 isValid
      *
-     * @param string $ipString 要解析的IPv4地址字符串
+     * @param string $ipString 要解析的IP地址字符串
      * @return string|null 返回二进制字节格式的IP地址，解析失败返回 null
      *
      * @example
@@ -178,13 +176,14 @@ class IPv4
      *
      * 将IPv4地址字符串转换为32位长整型值
      * 使用小端序字节序进行转换
+     * 与使用大端序的 toStr 不互为逆操作，保留旧接口行为
      *
      * @param string $ipString 要转换的IPv4地址字符串
      * @return int|null 返回转换后的长整型值，转换失败返回 null
      *
      * @example
      * ```php
-     * $long = IPv4::toLong('61.142.118.231'); // 返回：134744072
+     * $long = IPv4::toLong('1.2.3.4'); // 返回：67305985
      * $invalid = IPv4::toLong('invalid-ip'); // 返回 null
      * ```
      */
@@ -208,11 +207,8 @@ class IPv4
      *
      * @example
      * ```php
-     * $ip = IPv4::toStr(134744072); // 返回："61.142.118.231"
+     * $ip = IPv4::toStr(16909060); // 返回："1.2.3.4"
      * ```
-     */
-    /**
-     * @return string|false
      */
     public static function toStr(int $long)
     {

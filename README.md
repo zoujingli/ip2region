@@ -13,7 +13,7 @@
 >
 > ⚠️ **IPv6 按需启用**：普通 IPv6 查询需要额外准备 `ip2region_v6.xdb`。
 >
-> 🧩 **零额外扩展依赖**：PHP 7.1+ 即可使用。
+> 🧩 **运行环境**：核心查询支持 PHP 7.1+，无需额外第三方包。
 
 ## 🧭 快速导航
 
@@ -37,7 +37,7 @@
 | ⚙️  | 缓存策略    | 支持 `file`、`vectorIndex`、`content` 三种模式  |
 | 🛡️ | 特殊地址    | `simple()` 优先识别私网、回环、链路本地、文档测试、组播、保留地址等 |
 | 🧰  | 数据库工具   | 提供 `ip2down` 下载、查看、测试、清理数据库             |
-| 🧩  | 运行环境    | PHP 7.1+，纯 PHP 实现，无额外扩展依赖               |
+| 🧩  | 运行环境    | PHP 7.1+，纯 PHP 查询实现，无第三方包依赖           |
 
 ## 📦 安装
 
@@ -259,6 +259,8 @@ $searcher = ip2region\xdb\Searcher::newWithFileOnly(ip2region\xdb\IPv4::default(
 ```
 
 `newWithVectorIndex()` 和 `newWithBuffer()` 同样支持 `4/6` 与 `IPv4::default()` / `IPv6::default()`。加载自定义 XDB 前可用 `ip2region\xdb\Util::verifyFromFile($file)` 做兼容性检查；高层 `Ip2Region` 会自动完成文件结构和 IP 版本校验。
+
+完整 IP 二进制转换请使用 `Util::parseIP()` / `Util::ipToString()`。旧版整型转换辅助方法保留原有字节序行为，PHP 的原生 `int` 无法表示完整 128 位 IPv6。`Util::getStringUTF8()` 等编码转换辅助方法需要 `mbstring`，核心 IP 查询不调用这些方法。
 
 ## 🛡️ 特殊用途地址
 

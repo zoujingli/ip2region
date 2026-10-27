@@ -5,7 +5,6 @@
  * 提供便捷的全局函数接口，支持 IPv4 和 IPv6 地址查询
  *
  * @package ip2region
- * @version 3.0.0
  * @author Anyon <zoujingli@qq.com>
  * @link https://github.com/zoujingli/ip2region
  * @license Apache-2.0
@@ -29,12 +28,12 @@ if (!function_exists('ip2region')) {
      * - `simple` (默认): 返回格式化的地理位置字符串，如 "中国广东省中山市【电信】"
      * - `search`: 返回原始查询结果，如 "中国|广东省|中山市|电信|CN"
      * - `memory`: 返回数组格式，包含 city_id 和 region 字段
-     * - `binary`: 使用二进制搜索算法，返回数组格式
-     * - `btree`: 使用 B 树索引算法，返回数组格式
+     * - `binary`: 兼容旧名称，委托 memorySearch 返回数组
+     * - `btree`: 兼容旧名称，委托 memorySearch 返回数组
      *
      * @param string $ip IP 地址，支持 IPv4 和 IPv6 格式
      * @param string $method 查询方法，可选值：simple, search, memory, binary, btree
-     * @return string|array 查询结果
+     * @return string|array|null 查询结果，保留 simple 的可空返回类型
      * @throws Exception 当 IP 地址格式无效、数据库缺失或查询失败时抛出异常
      *
      * @example

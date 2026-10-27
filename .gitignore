@@ -31,7 +31,7 @@ Thumbs.db
 # 日志文件
 *.log
 
-# 压缩文件（除了需要保留的 IPv4 分片）
+# 压缩文件
 *.zip
 *.tar.gz
 *.rar

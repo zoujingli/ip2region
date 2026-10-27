@@ -7,7 +7,7 @@
  * - 支持 IPv4 和 IPv6 地址查询
  * - 支持多种缓存策略（file、vectorIndex、content）
  * - 智能数据库加载（自动路径、vendor目录、默认路径）
- * - 高性能查询，毫秒级响应
+ * - 向量索引定位和段索引二分查找
  * - 支持 XDB 数据库格式
  * - 自动数据库版本检测和加载
  *
@@ -19,9 +19,9 @@
  *
  * 性能特点：
  * - 内存占用低，支持大数据库文件
- * - 查询速度快，支持高并发
+ * - 可在常驻进程中复用已加载的查询器
  * - 支持多种缓存策略，优化不同场景
- * - 智能加载机制，自动查找最优数据库文件
+ * - 按固定路径优先级查找数据库，首次查询时加载
  *
  * 数据库优先级：
  * 1. 自定义数据库路径（通过构造函数指定）
@@ -29,7 +29,6 @@
  * 3. 内置数据库文件（db/ 目录，默认包含 IPv4，IPv6 可按需提供）
  *
  * @author Anyon <zoujingli@qq.com>
- * @version 3.0
  * @since 2022-01-01
  */
 
@@ -434,8 +433,8 @@ class Ip2Region
      * 包含IPv6地址格式验证，确保只处理有效的IPv6地址
      *
      * @param string $ip 要查询的IPv6地址
-     * @return string 返回地理位置字符串，查询失败返回空字符串 ""
-     * @throws \Exception 当不是有效的IPv6地址时抛出异常
+     * @return string 返回原始地区字符串，未匹配时返回空字符串
+     * @throws \Exception 当IPv6无效、数据库不可用或读取失败时抛出异常
      *
      * @example
      * ```php
@@ -460,7 +459,7 @@ class Ip2Region
      * 将原始查询结果解析为包含国家、省份、城市、ISP等信息的数组
      *
      * @param string $ip 要查询的IP地址（支持IPv4和IPv6）
-     * @return array|null 返回包含详细地理信息的数组，查询失败返回 null
+     * @return array|null 返回详细信息数组；未匹配时地区字段为空，保留可空返回类型
      *      格式：[
      *        'country' => '国家',
      *        'province' => '省份',
@@ -470,6 +469,7 @@ class Ip2Region
      *        'version' => 'IP版本(v4/v6)',
      *        'region' => '' // 已弃用，原用于世界级区域，现已不再使用
      *      ]
+     * @throws \Exception 当IP无效、数据库不可用或读取失败时抛出异常
      *
      * @example
      * ```php
@@ -481,7 +481,7 @@ class Ip2Region
      * echo $info['isp']; // 输出：电信
      *
      * $info = $searcher->getIpInfo('8.8.8.8');
-     * echo $info['country']; // 输出：美国
+     * echo $info['country']; // 输出：United States
      * echo $info['isp']; // 输出：Google LLC
      * ```
      */
@@ -1071,10 +1071,12 @@ class Ip2Region
      *    'v4_loaded' => bool,        // IPv4搜索引擎是否已加载
      *    'v6_loaded' => bool,        // IPv6搜索引擎是否已加载
      *    'cache_policy' => string,   // 当前缓存策略
-     *    'custom_v4_path' => string, // 自定义IPv4数据库路径
-     *    'custom_v6_path' => string, // 自定义IPv6数据库路径
-     *    'v4_version' => int,        // IPv4数据库版本（如果已加载）
-     *    'v6_version' => int         // IPv6数据库版本（如果已加载）
+     *    'custom_v4_path' => string|null, // 自定义IPv4数据库路径
+     *    'custom_v6_path' => string|null, // 自定义IPv6数据库路径
+     *    'v4_path' => string|null,        // 实际查找的IPv4路径
+     *    'v6_path' => string|null,        // 实际查找的IPv6路径
+     *    'v4_version' => ip2region\xdb\IPv4, // 已加载时返回版本对象
+     *    'v6_version' => ip2region\xdb\IPv6  // 已加载时返回版本对象
      *  ]
      *
      * @example
@@ -1125,22 +1127,16 @@ class Ip2Region
      *
      * @return array 返回包含自定义数据库文件信息的数组
      *  格式：[
-     *    'v4_path' => string,        // IPv4自定义数据库路径
-     *    'v6_path' => string,        // IPv6自定义数据库路径
-     *    'v4_exists' => bool,        // IPv4文件是否存在
-     *    'v6_exists' => bool,        // IPv6文件是否存在
-     *    'v4_size' => int,           // IPv4文件大小（字节）
-     *    'v6_size' => int,           // IPv6文件大小（字节）
-     *    'v4_modified' => int,       // IPv4文件修改时间
-     *    'v6_modified' => int        // IPv6文件修改时间
+     *    'v4' => array|null, // 存在时包含 path、size、modified、exists
+     *    'v6' => array|null  // 未设置路径或文件不存在时为 null
      *  ]
      *
      * @example
      * ```php
      * $searcher = new Ip2Region();
      * $info = $searcher->getCustomDbInfo();
-     * if ($info['v4_exists']) {
-     *     echo "IPv4文件大小: " . $info['v4_size'] . " 字节\n";
+     * if ($info['v4'] !== null) {
+     *     echo "IPv4文件大小: " . $info['v4']['size'] . " 字节\n";
      * }
      * ```
      */
@@ -1240,7 +1236,8 @@ class Ip2Region
      * @example
      * ```php
      * $searcher = new Ip2Region();
-     * $info = $searcher->getDbFileInfo('/path/to/database.xdb');
+     * $searcher->setCustomDbPaths('/path/to/database.xdb');
+     * $info = $searcher->getCustomDbInfo()['v4'];
      * if ($info) {
      *     echo "文件大小: " . $info['size'] . " 字节\n";
      *     echo "修改时间: " . date('Y-m-d H:i:s', $info['modified']) . "\n";
@@ -1264,20 +1261,21 @@ class Ip2Region
     /**
      * 检查自定义数据库是否存在
      *
-     * 检查指定的自定义数据库文件是否存在且可读
-     * 用于验证自定义数据库路径的有效性
+     * 检查指定的自定义数据库文件是否存在
+     * 可读性和文件头由创建查询器时的校验负责
      *
      * @param string|null $filePath 数据库文件路径
-     * @return bool 返回 true 表示文件存在且可读，false 表示不存在或不可读
+     * @return bool 返回 true 表示文件存在，false 表示路径为空或不存在
      *
      * @example
      * ```php
      * $searcher = new Ip2Region();
-     * $exists = $searcher->isCustomDbExists('/path/to/database.xdb');
+     * $searcher->setCustomDbPaths('/path/to/database.xdb');
+     * $exists = $searcher->isUsingCustomDb()['v4'];
      * if ($exists) {
      *     echo "自定义数据库文件存在\n";
      * } else {
-     *     echo "自定义数据库文件不存在或不可读\n";
+     *     echo "自定义数据库文件不存在\n";
      * }
      * ```
      */
