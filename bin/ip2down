@@ -12,7 +12,7 @@
  * - 退出码：成功为 0，参数、下载或校验失败为 1；test 缺少可选 IPv6 时跳过
  *
  * @author Anyon <zoujingli@qq.com>
- * @version 3.0.16
+ * @version 3.0.17
  */
 
 // 环境检查
