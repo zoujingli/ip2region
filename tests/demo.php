@@ -6,8 +6,8 @@
  * 功能说明：
  * - 展示IP2Region库的基本使用方法
  * - 演示IPv4和IPv6地址查询功能
- * - 展示多种缓存策略和数据库加载
- * - 性能测试和统计信息展示
+ * - 展示 content 缓存策略和数据库加载
+ * - 查询结果断言和运行时统计信息展示
  *
  * 演示内容：
  * 1. IPv4地址查询演示 - 展示常见公网地址的查询结果
@@ -21,6 +21,7 @@
  * - 公网地址期望值来自当前 XDB 数据库的真实查询结果。
  * - 特殊用途地址期望值来自库内 IANA/RFC 特殊地址识别规则。
  * - 普通 IPv6 公网地址查询需要预先准备 ip2region_v6.xdb。
+ * - 缺少 IPv6 数据库时跳过对应样本；结果不符或其他异常以退出码 1 结束。
  *
  * 运行方式：
  * php tests/demo.php
@@ -38,7 +39,7 @@ try {
     $runSimpleCase = function ($ip, $expected, $allowMissingIpv6Db = false) use ($searcher, &$failures) {
         try {
             $actual = $searcher->simple($ip);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             if ($allowMissingIpv6Db && strpos($e->getMessage(), 'IPv6 查询需要下载') !== false) {
                 echo "  {$ip} => 跳过: 缺少 IPv6 数据库\n";
                 return;
@@ -99,12 +100,13 @@ try {
                 echo "    ISP: {$info['isp']}\n";
                 echo "    版本: {$info['version']}\n\n";
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             if (strpos($e->getMessage(), 'IPv6 查询需要下载') !== false) {
                 echo "  {$ip} => 跳过: 缺少 IPv6 数据库\n\n";
                 continue;
             }
 
+            $failures[] = sprintf('%s detail query threw `%s`', $ip, $e->getMessage());
             echo "  {$ip} => 错误: " . $e->getMessage() . "\n\n";
         }
     }
@@ -170,8 +172,9 @@ try {
         }
         exit(1);
     }
-} catch (Exception $e) {
+} catch (Throwable $e) {
     echo "错误: " . $e->getMessage() . "\n";
+    exit(1);
 }
 
 echo "\n=== 演示完成 ===\n";

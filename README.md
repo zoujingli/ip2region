@@ -74,6 +74,8 @@ IPv4 数据库已随包发布。IPv6 数据库默认不内置，需要下载到 
 
 下载工具仍获取官方 `master` 分支的最新数据。下载目录的优先级高于包内默认目录；升级包后如已有旧的下载文件，请运行 `composer download` 同步更新 IPv4 和 IPv6，或运行 `composer download:v4` 只更新 IPv4。
 
+PHP 查询核心已对照官方 [binding/php](https://github.com/lionsoul2014/ip2region/tree/master/binding/php) 核实；本次参考其 2026-10-24 的测试错误处理更新，补齐本项目脚本的失败退出码。IPv4 更新包含社区反馈的地区和运营商修正；IPv6 数据基线未变。
+
 ### 📥 下载 IPv6 数据库
 
 推荐使用内置工具：
@@ -286,7 +288,7 @@ echo $searcher->simple('fc00::1') . PHP_EOL;        // 唯一本地地址（私�
 # 运行演示
 composer demo
 
-# 运行演示、特殊用途地址和 XDB 校验测试
+# 运行演示、特殊用途地址、XDB 校验和 CLI 退出码回归
 composer test
 
 # 查询单个 IP
@@ -317,15 +319,20 @@ composer download:v6
 ./vendor/bin/ip2down clear
 ```
 
+`ip2down` 成功退出码为 `0`；未知命令、无效下载版本、下载失败或已存在数据库校验失败返回 `1`。`list` 的下载目录为空、`test` 缺少可选 IPv6 数据库时仍返回 `0`，并打印相应提示。
+
 ## 🧪 测试与性能
 
 ```bash
 composer validate --strict
 composer test
+composer test:cli
 composer performance
 ```
 
-`composer performance` 会输出当前系统、PHP 版本、缓存命中、查询方法、批量查询、循环查询、QPS 和内存统计。结果会受机器性能、PHP 版本、缓存策略、数据库文件位置以及是否已准备 IPv6 数据库影响，README 不固定承诺某个具体数值。
+`composer performance` 使用默认 `file` 策略，输出首次查询、同实例再次查询、查询方法、批量与循环查询、QPS 和内存统计。计时保留原始精度后计算 QPS，同实例查询仍会进行文件 IO。结果仅反映当前机器和数据库，不提供固定性能评分。
+
+演示与性能脚本在 IPv6 未安装时跳过对应样本；已安装但损坏、查询异常或断言失败时返回非零退出码。性能测试先检查真实样本，并核对批量结果，避免将失败查询计入正常耗时。`composer test:cli` 需要允许 PHP 执行子进程，在临时目录测试这些退出码，禁用网络下载并在结束时清理测试文件。
 
 `tests/demo.php` 中的公网地址期望值来自当前 XDB 的真实查询结果；更新数据库文件后如输出变化，应同步更新测试期望值。特殊用途地址测试使用库内 IANA/RFC 地址段识别规则。
 
@@ -346,8 +353,9 @@ ip2region/
 │       ├── Searcher.php
 │       └── Util.php
 ├── tests/
-│   ├── demo.php                    # 使用演示
-│   ├── quick_performance_test.php  # 性能测试
+│   ├── demo.php                    # 使用演示与真实数据断言
+│   ├── quick_performance_test.php  # 默认 file 策略性能测试
+│   ├── cli_validation.php          # CLI 退出码与可选 IPv6 回归
 │   ├── special_addresses.php       # 特殊用途地址测试
 │   └── xdb_validation.php          # XDB 校验与工厂兼容测试
 ├── composer.json
@@ -417,7 +425,7 @@ $searcher = new Ip2Region('vectorIndex');
 
 ### 示例输出和 README 略有差异
 
-地区和运营商名称来自 XDB 数据库，数据库更新后输出可能变化。README 示例用于说明返回格式，不应作为固定断言；自动化断言请参考 `tests/demo.php`、`tests/special_addresses.php` 和 `tests/xdb_validation.php`。
+地区和运营商名称来自 XDB 数据库，数据库更新后输出可能变化。README 示例用于说明返回格式，不应作为固定断言；自动化断言通过 `composer test` 执行。
 
 ## 🔗 相关链接
 

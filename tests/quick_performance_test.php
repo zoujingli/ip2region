@@ -2,11 +2,16 @@
 /**
  * IP2Region 快速性能测试
  *
- * 简化的性能测试，专注于核心性能指标
- * 测试多种缓存策略和数据库加载性能
+ * 使用默认 file 策略测量首次查询、同实例再次查询及批量查询。
+ * 先验证真实样本可查询；IPv6 未安装时跳过，查询异常或空结果使测试失败。
  */
 
-require_once 'vendor/autoload.php';
+set_exception_handler(function (Throwable $e) {
+    fwrite(STDERR, '性能测试失败: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+});
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 echo "=== IP2Region 快速性能测试 ===\n\n";
 
@@ -42,7 +47,7 @@ if ($diskFree !== false && $diskTotal !== false) {
 }
 
 // 获取CPU信息（如果可用）
-if (PHP_OS_FAMILY === 'Linux' && is_readable('/proc/cpuinfo')) {
+if (PHP_OS === 'Linux' && is_readable('/proc/cpuinfo')) {
     $cpuInfo = file_get_contents('/proc/cpuinfo');
     if ($cpuInfo) {
         preg_match('/model name\s*:\s*(.+)/', $cpuInfo, $matches);
@@ -54,7 +59,7 @@ if (PHP_OS_FAMILY === 'Linux' && is_readable('/proc/cpuinfo')) {
             echo "CPU核心数: " . count($matches[0]) . "\n";
         }
     }
-} elseif (PHP_OS_FAMILY === 'Darwin') {
+} elseif (PHP_OS === 'Darwin') {
     $cpuInfo = shell_exec('sysctl -n machdep.cpu.brand_string 2>/dev/null');
     if ($cpuInfo) {
         echo "CPU: " . trim($cpuInfo) . "\n";
@@ -82,9 +87,9 @@ echo "  缓存策略: " . $dbInfo['cache_policy'] . "\n\n";
 function testPerformance($name, $callback, $methodInfo = '')
 {
     $start = microtime(true);
-    $result = $callback();
-    $time = round((microtime(true) - $start) * 1000, 2);
-    echo "{$name}: {$time}ms";
+    $callback();
+    $time = (microtime(true) - $start) * 1000;
+    echo $name . ': ' . round($time, 4) . 'ms';
     if ($methodInfo) {
         echo " ({$methodInfo})";
     }
@@ -123,41 +128,49 @@ if (!empty($dbInfo['v6_path'])) {
 $performanceIpPool = array_merge($ipv4Samples, $ipv6Samples);
 $batchSampleIps = repeatSamples($performanceIpPool, 10);
 
+$expectedRegions = array();
+foreach ($performanceIpPool as $ip) {
+    $region = $searcher->search($ip);
+    if ($region === '') {
+        throw new RuntimeException("性能样本查询返回空结果: {$ip}");
+    }
+    $expectedRegions[$ip] = $region;
+}
+echo '样本预检通过: ' . count($expectedRegions) . " 个IP\n";
+
 // 1. 首次加载测试
 echo "1. 首次加载测试:\n";
-$firstLoadV4 = testPerformance("  IPv4首次加载", function () {
-    $ip2region = new \Ip2Region();
-    return $ip2region->simple('61.142.118.231');
-}, "new Ip2Region() + simple()");
+$v4Searcher = new \Ip2Region();
+$firstLoadV4 = testPerformance("  IPv4首次查询", function () use ($v4Searcher) {
+    return $v4Searcher->simple('61.142.118.231');
+}, "simple() 含数据库加载");
 
-$firstLoadV6 = testPerformance("  IPv6首次加载", function () {
-    try {
-        $ip2region = new \Ip2Region();
-        return $ip2region->simple('2400:3200::1');
-    } catch (Exception $e) {
-        return "IPv6数据库未下载: " . $e->getMessage();
-    }
-}, "new Ip2Region() + simple()");
+$firstLoadV6 = null;
+if (!empty($ipv6Samples)) {
+    $v6Searcher = new \Ip2Region();
+    $firstLoadV6 = testPerformance("  IPv6首次查询", function () use ($v6Searcher) {
+        return $v6Searcher->simple('2400:3200::1');
+    }, "simple() 含数据库加载");
+} else {
+    echo "  IPv6查询跳过: 缺少 IPv6 数据库\n";
+}
 
-// 2. 缓存命中测试
-echo "\n2. 缓存命中测试:\n";
-$cacheHitV4 = testPerformance("  IPv4缓存命中", function () {
-    $ip2region = new \Ip2Region();
-    return $ip2region->simple('8.8.8.8');
-}, "new Ip2Region() + simple() (使用缓存)");
+// 2. 复用已加载查询器，file 模式仍会读取数据库
+echo "\n2. 同实例再次查询:\n";
+$repeatV4 = testPerformance("  IPv4再次查询", function () use ($v4Searcher) {
+    return $v4Searcher->simple('61.142.118.231');
+}, "复用同一实例和IP");
 
-$cacheHitV6 = testPerformance("  IPv6缓存命中", function () {
-    try {
-        $ip2region = new \Ip2Region();
-        return $ip2region->simple('2400:3200::1');
-    } catch (Exception $e) {
-        return "IPv6数据库未下载: " . $e->getMessage();
-    }
-}, "new Ip2Region() + simple() (使用缓存)");
+$repeatV6 = null;
+if ($firstLoadV6 !== null) {
+    $repeatV6 = testPerformance("  IPv6再次查询", function () use ($v6Searcher) {
+        return $v6Searcher->simple('2400:3200::1');
+    }, "复用同一实例和IP");
+}
 
 // 3. 查询方法对比
 echo "\n3. 查询方法对比:\n";
-$ip2region = new \Ip2Region();
+$ip2region = $searcher;
 $simpleTime = testPerformance("  simple方法", function () use ($ip2region) {
     return $ip2region->simple('61.142.118.231');
 }, "ip2region->simple()");
@@ -172,21 +185,27 @@ $memoryTime = testPerformance("  memorySearch方法", function () use ($ip2regio
 
 // 4. 批量查询测试
 echo "\n4. 批量查询测试:\n";
-$batchTime = testPerformance("  批量查询(10个IP)", function () use ($ip2region, $batchSampleIps) {
-    try {
-        return $ip2region->batchSearch($batchSampleIps);
-    } catch (Exception $e) {
-        return "批量查询包含IPv6地址，需要下载IPv6数据库: " . $e->getMessage();
+$batchTime = testPerformance("  批量查询(10次)", function () use ($ip2region, $batchSampleIps, $expectedRegions) {
+    $results = $ip2region->batchSearch($batchSampleIps);
+    foreach ($batchSampleIps as $ip) {
+        if (!isset($results[$ip]) || $results[$ip] !== $expectedRegions[$ip]) {
+            throw new RuntimeException("批量查询结果不匹配: {$ip}");
+        }
     }
-}, "ip2region->batchSearch(10个IP)");
+    return $results;
+}, "batchSearch() 输入10项，含重复IP");
 
 // 重复当前 XDB 已验证的真实样本池，避免拼接构造不存在的测试地址。
 echo "  真实样本池: " . count($performanceIpPool) . " 个IP，重复生成10000次查询...\n";
 $testIps = repeatSamples($performanceIpPool, 10000);
 
-$batch10000Time = testPerformance("  批量查询(10000个IP)", function () use ($ip2region, $testIps) {
-    return $ip2region->batchSearch($testIps);
-}, "ip2region->batchSearch(10000个IP)");
+$batch10000Time = testPerformance("  批量查询(10000次)", function () use ($ip2region, $testIps, $expectedRegions) {
+    $results = $ip2region->batchSearch($testIps);
+    if ($results !== $expectedRegions) {
+        throw new RuntimeException('批量查询结果与样本预检不一致');
+    }
+    return $results;
+}, "batchSearch() 输入10000项，含重复IP");
 
 // 5. 循环查询测试
 echo "\n5. 循环查询测试:\n";
@@ -197,13 +216,10 @@ $loopTime = testPerformance("  循环查询(10000次)", function () use ($ip2reg
     return 10000;
 }, "10000次 ip2region->simple() 循环调用");
 
-// 6. 缓存清理测试
-echo "\n6. 缓存清理测试:\n";
-$clearTime = testPerformance("  清理所有缓存", function () {
-    // 性能监控测试
-    $searcher = new \Ip2Region();
-    $stats = $searcher->getStats();
-    return $stats;
+// 6. 运行时统计读取
+echo "\n6. 运行时统计读取:\n";
+$statsTime = testPerformance("  获取运行时统计", function () use ($ip2region) {
+    return $ip2region->getStats();
 }, "getStats() 性能监控");
 
 // 7. 内存使用统计
@@ -218,35 +234,36 @@ echo "  IPv6已加载: " . ($stats['v6_loaded'] ? '是' : '否') . "\n";
 // 8. 性能总结
 echo "\n8. 性能总结:\n";
 echo "==================\n";
-$v4Improvement = round(($firstLoadV4 - $cacheHitV4) / $firstLoadV4 * 100, 1);
-$v6Improvement = round(($firstLoadV6 - $cacheHitV6) / $firstLoadV6 * 100, 1);
-
-echo "首次加载 vs 缓存命中:\n";
-echo "  IPv4: {$firstLoadV4}ms → {$cacheHitV4}ms (提升 {$v4Improvement}%)\n";
-echo "  IPv6: {$firstLoadV6}ms → {$cacheHitV6}ms (提升 {$v6Improvement}%)\n";
+echo "首次查询 vs 同实例再次查询:\n";
+printf("  IPv4: %.4fms → %.4fms\n", $firstLoadV4, $repeatV4);
+if ($firstLoadV6 !== null) {
+    printf("  IPv6: %.4fms → %.4fms\n", $firstLoadV6, $repeatV6);
+} else {
+    echo "  IPv6: 跳过\n";
+}
 
 echo "\n查询方法性能:\n";
-echo "  simple: {$simpleTime}ms (ip2region->simple())\n";
-echo "  search: {$searchTime}ms (ip2region->search())\n";
-echo "  memorySearch: {$memoryTime}ms (ip2region->memorySearch())\n";
+printf("  simple: %.4fms (ip2region->simple())\n", $simpleTime);
+printf("  search: %.4fms (ip2region->search())\n", $searchTime);
+printf("  memorySearch: %.4fms (ip2region->memorySearch())\n", $memoryTime);
 
 echo "\n批量处理性能:\n";
-echo "  10个IP: {$batchTime}ms (ip2region->batchSearch())\n";
-echo "  10000个IP: {$batch10000Time}ms (ip2region->batchSearch())\n";
-echo "  10000次循环: {$loopTime}ms (10000次 ip2region->simple())\n";
+printf("  10次查询: %.4fms (ip2region->batchSearch())\n", $batchTime);
+printf("  10000次查询: %.4fms (ip2region->batchSearch())\n", $batch10000Time);
+printf("  10000次循环: %.4fms (10000次 ip2region->simple())\n", $loopTime);
 
 // 计算QPS（每秒查询数）
-$qps10 = round(10 / ($batchTime / 1000), 0);
-$qps10000 = round(10000 / ($batch10000Time / 1000), 0);
-$qps10000Loop = round(10000 / ($loopTime / 1000), 0);
+$qps10 = $batchTime > 0 ? round(10000 / $batchTime, 0) : 'N/A';
+$qps10000 = $batch10000Time > 0 ? round(10000000 / $batch10000Time, 0) : 'N/A';
+$qps10000Loop = $loopTime > 0 ? round(10000000 / $loopTime, 0) : 'N/A';
 
 echo "\nQPS性能:\n";
-echo "  10个IP: {$qps10} QPS\n";
-echo "  10000个IP: {$qps10000} QPS\n";
+echo "  10次查询: {$qps10} QPS\n";
+echo "  10000次查询: {$qps10000} QPS\n";
 echo "  10000次循环: {$qps10000Loop} QPS\n";
 
 echo "\n性能监控:\n";
-echo "  性能监控: {$clearTime}ms (getStats() 性能监控)\n";
+printf("  性能监控: %.4fms (getStats() 性能监控)\n", $statsTime);
 
 // 9. 测试环境总结
 echo "\n9. 测试环境总结:\n";
@@ -265,37 +282,4 @@ echo "  IPv4已加载: " . ($finalDbInfo['v4_loaded'] ? '是' : '否') . "\n";
 echo "  IPv6已加载: " . ($finalDbInfo['v6_loaded'] ? '是' : '否') . "\n";
 echo "  缓存策略: " . $finalDbInfo['cache_policy'] . "\n";
 
-// 计算性能评分
-$performanceScore = 0;
-if ($cacheHitV4 < 1) $performanceScore += 30;
-elseif ($cacheHitV4 < 5) $performanceScore += 20;
-elseif ($cacheHitV4 < 10) $performanceScore += 10;
-
-if ($cacheHitV6 < 1) $performanceScore += 30;
-elseif ($cacheHitV6 < 5) $performanceScore += 20;
-elseif ($cacheHitV6 < 10) $performanceScore += 10;
-
-if ($batchTime < 5) $performanceScore += 20;
-elseif ($batchTime < 10) $performanceScore += 15;
-elseif ($batchTime < 20) $performanceScore += 10;
-
-if ($loopTime < 100) $performanceScore += 20;
-elseif ($loopTime < 200) $performanceScore += 15;
-elseif ($loopTime < 500) $performanceScore += 10;
-
-echo "性能评分: {$performanceScore}/100\n";
-
-if ($performanceScore >= 90) {
-    echo "性能等级: 优秀 ⭐⭐⭐⭐⭐\n";
-} elseif ($performanceScore >= 80) {
-    echo "性能等级: 良好 ⭐⭐⭐⭐\n";
-} elseif ($performanceScore >= 70) {
-    echo "性能等级: 中等 ⭐⭐⭐\n";
-} elseif ($performanceScore >= 60) {
-    echo "性能等级: 及格 ⭐⭐\n";
-} else {
-    echo "性能等级: 需要优化 ⭐\n";
-}
-
 echo "\n=== 测试完成 ===\n";
-?>

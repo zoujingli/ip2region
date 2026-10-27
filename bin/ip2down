@@ -9,6 +9,7 @@
  * - 清理：./vendor/bin/ip2down clear
  * - 测试：./vendor/bin/ip2down test
  * - 帮助：./vendor/bin/ip2down help
+ * - 退出码：成功为 0，参数、下载或校验失败为 1；test 缺少可选 IPv6 时跳过
  *
  * @author Anyon <zoujingli@qq.com>
  * @version 3.0.16
@@ -52,7 +53,8 @@ function detectProjectPath()
 
     // 验证找到的根目录是否正确（包含 composer.json）
     if (!file_exists($rootDir . DIRECTORY_SEPARATOR . 'composer.json')) {
-        die('错误：无法找到项目根目录，请确保在正确的 Composer 项目中使用此工具');
+        fwrite(STDERR, "错误：无法找到项目根目录，请确保在正确的 Composer 项目中使用此工具\n");
+        exit(1);
     }
 
     return ['rootDir' => $rootDir, 'isProduction' => $isProduction];
@@ -64,7 +66,8 @@ $rootDir = $pathInfo['rootDir'];
 $autoloadFile = $rootDir . '/vendor/autoload.php';
 
 if (!file_exists($rootDir . '/composer.json') || !file_exists($autoloadFile)) {
-    die('错误：无法找到项目根目录或 autoload 文件');
+    fwrite(STDERR, "错误：无法找到项目根目录或 autoload 文件\n");
+    exit(1);
 }
 
 require_once $autoloadFile;
@@ -98,7 +101,7 @@ class DatabaseManager
                         'file'    => 'ip2region_v6.xdb',
                         'desc'    => 'IPv6 数据库',
                         'versionNo' => 6,
-                        // 本次验证的官方文件约 37.28MB（37277813 bytes），这里设置较低下限避免下载到 HTML/错误页
+                        // 大小下限用于排除 HTML/错误页；当前数据基线统一记录在 README
                         'minSize' => 30 * 1024 * 1024
                 )
         );
@@ -349,30 +352,28 @@ class DatabaseDownloader
         $this->manager = $dbManager;
     }
 
-    public function run($args)
+    public function run($args): int
     {
         if (empty($args) || in_array($args[0], array('-h', '--help', 'help'))) {
             $this->showHelp();
-            return;
+            return 0;
         }
 
         $command = $args[0];
         switch ($command) {
             case 'download':
-                $this->download($args);
-                break;
+                return $this->download($args);
             case 'list':
-                $this->list();
-                break;
+                return $this->list();
             case 'clear':
                 $this->clear();
-                break;
+                return 0;
             case 'test':
-                $this->test();
-                break;
+                return $this->test();
             default:
                 echo "未知命令: $command\n";
                 $this->showHelp();
+                return 1;
         }
     }
 
@@ -388,7 +389,7 @@ class DatabaseDownloader
         echo "  help                  显示帮助信息\n";
     }
 
-    private function download($args)
+    private function download($args): int
     {
         $version = isset($args[1]) ? $args[1] : 'all';
 
@@ -397,8 +398,13 @@ class DatabaseDownloader
                 $this->showProgress($message, $version);
             });
             $this->showDownloadResults($results);
-        } catch (Exception $e) {
+            foreach ($results as $result) {
+                if (!$result['success']) return 1;
+            }
+            return 0;
+        } catch (Throwable $e) {
             echo "\n❌ 下载失败: " . $e->getMessage() . "\n";
+            return 1;
         }
     }
 
@@ -414,7 +420,7 @@ class DatabaseDownloader
 
     private function showDownloadResults($results)
     {
-        echo "\n\n下载完成！\n";
+        echo "\n\n下载结果：\n";
         foreach ($results as $ver => $result) {
             if ($result['success']) {
                 echo "✅ {$ver}: " . $this->formatBytes($result['size']);
@@ -439,7 +445,7 @@ class DatabaseDownloader
         return round($bytes, $precision) . ' ' . $units[$i];
     }
 
-    private function list()
+    private function list(): int
     {
         echo "已下载的数据库文件：\n\n";
 
@@ -447,9 +453,10 @@ class DatabaseDownloader
         if (empty($files)) {
             echo "❌ 没有找到数据库文件\n";
             echo "请运行: ip2down download all\n";
-            return;
+            return 0;
         }
 
+        $status = 0;
         foreach ($files as $file) {
             echo "📁 {$file['filename']}\n";
             echo "   类型: {$file['type']}\n";
@@ -461,8 +468,10 @@ class DatabaseDownloader
                 echo " / ptr {$file['xdb_runtime_ptr_bytes']} bytes\n\n";
             } else {
                 echo "   校验: 失败 - {$file['xdb_error']}\n\n";
+                $status = 1;
             }
         }
+        return $status;
     }
 
     private function clear()
@@ -474,7 +483,7 @@ class DatabaseDownloader
         echo "ℹ️  注意：内置数据库文件不会被清除\n";
     }
 
-    private function test()
+    private function test(): int
     {
         echo "正在测试数据库功能...\n\n";
 
@@ -488,8 +497,10 @@ class DatabaseDownloader
                 echo "\n✅ IPv4 数据库功能测试通过\n";
                 echo "⚠️  普通 IPv6 查询需要先运行: ip2down download v6\n";
             }
-        } catch (Exception $e) {
+            return 0;
+        } catch (Throwable $e) {
             $this->showTestError($e);
+            return 1;
         }
     }
 
@@ -540,6 +551,11 @@ class DatabaseDownloader
 }
 
 // 主程序入口
-$dbManager = new DatabaseManager();
-$downloader = new DatabaseDownloader($dbManager);
-$downloader->run(array_slice($argv, 1));
+try {
+    $dbManager = new DatabaseManager();
+    $downloader = new DatabaseDownloader($dbManager);
+    exit($downloader->run(array_slice($argv, 1)));
+} catch (Throwable $e) {
+    fwrite(STDERR, '执行失败: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}
