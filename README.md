@@ -69,7 +69,7 @@ IPv4 数据库已随包发布。IPv6 数据库默认不内置，需要下载到 
 
 | 数据库 | 生成时间 | 官方提交 | 文件大小 |
 |--------|----------|----------|----------|
-| IPv4（内置） | 2026-08-28 12:43:01 | [7e4c5b6](https://github.com/lionsoul2014/ip2region/commit/7e4c5b6761451c734db51e2b0652219ffc1aba36) | 11,122,036 字节 |
+| IPv4（内置） | 2026-10-14 10:11:07 | [1bf6cab](https://github.com/lionsoul2014/ip2region/commit/1bf6cabfb63c1a14af0971749c2120a3e5c77d72) | 11,122,642 字节 |
 | IPv6（按需下载） | 2026-08-14 13:38:41 | [85a4f87](https://github.com/lionsoul2014/ip2region/commit/85a4f87cb9d6f59f153b316d953f0ae43867adfc) | 37,277,813 字节 |
 
 下载工具仍获取官方 `master` 分支的最新数据。下载目录的优先级高于包内默认目录；升级包后如已有旧的下载文件，请运行 `composer download` 同步更新 IPv4 和 IPv6，或运行 `composer download:v4` 只更新 IPv4。

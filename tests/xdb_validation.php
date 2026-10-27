@@ -5,8 +5,9 @@
  *
  * 使用当前真实 XDB 数据库文件验证：
  * - Searcher 工厂同时兼容 int 版本号和 IPv4/IPv6 版本对象
+ * - 官方 IPv4 数据修正的网段及相邻边界在三种缓存策略下查询一致
  * - 自定义数据库路径放错 IPv4/IPv6 文件时能提前报出版本不匹配
- * - 截断或非 XDB 文件能被运行时校验拒绝
+ * - 短于文件头或非 XDB 文件能被运行时校验拒绝
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -44,6 +45,14 @@ if (!is_file($v4File)) {
 }
 
 $v4Expected = '中国|广东省|中山市|电信|CN';
+$v4BoundaryCases = array(
+    '160.250.119.255' => 'Japan|Tokyo|Asagaya-minami|0|JP',
+    '160.250.120.0'   => '印度|Maharashtra|Mumbai|Edgerede Private Limited|IN',
+    '160.250.120.255' => '印度|Maharashtra|Mumbai|Edgerede Private Limited|IN',
+    '160.250.121.0'   => '印度|Delhi|Delhi|Edgerede Private Limited|IN',
+    '160.250.121.255' => '印度|Delhi|Delhi|Edgerede Private Limited|IN',
+    '160.250.122.0'   => 'Japan|Tokyo|Asagaya-minami|0|JP',
+);
 
 foreach (array('file', 'vectorIndex', 'content') as $cachePolicy) {
     try {
@@ -53,6 +62,9 @@ foreach (array('file', 'vectorIndex', 'content') as $cachePolicy) {
             $v4Expected,
             $searcher->search('61.142.118.231')
         );
+        foreach ($v4BoundaryCases as $ip => $expected) {
+            xdbAssertSame('IPv4 boundary ' . $cachePolicy . ' ' . $ip, $expected, $searcher->search($ip));
+        }
     } catch (Throwable $e) {
         $failures[] = 'high-level cache policy ' . $cachePolicy . ' threw `' . $e->getMessage() . '`';
     }
